@@ -1,12 +1,59 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogOut, Home } from 'lucide-react';
 import ChatInterface from '@/components/ChatInterface';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check if user is authenticated
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate('/auth');
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth');
+      } else if (session) {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: 'Logout realizado',
+        description: 'Você foi desconectado com sucesso.',
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao fazer logout',
+        description: 'Ocorreu um erro. Tente novamente.',
+      });
+    }
+  };
+
+  if (!user) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -19,6 +66,9 @@ const Index: React.FC = () => {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate('/')} title="Página inicial">
               <Home className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>

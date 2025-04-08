@@ -1,11 +1,33 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, MessageCircle, Shield, Sparkles } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleAuthAction = () => {
+    if (session) {
+      navigate('/chat');
+    } else {
+      navigate('/auth');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
@@ -18,15 +40,15 @@ const LandingPage: React.FC = () => {
           <Button 
             variant="ghost" 
             className="hidden md:flex"
-            onClick={() => navigate('/login')}
+            onClick={handleAuthAction}
           >
-            Login
+            {session ? 'Dashboard' : 'Login'}
           </Button>
           <Button 
-            onClick={() => navigate('/login')}
+            onClick={handleAuthAction}
             className="shadow-lg"
           >
-            Começar Agora <ArrowRight className="ml-2 h-4 w-4" />
+            {session ? 'Ir para o Chat' : 'Começar Agora'} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -43,15 +65,15 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <Button 
               size="lg" 
-              onClick={() => navigate('/login')}
+              onClick={handleAuthAction}
               className="shadow-lg text-base"
             >
-              Experimente Grátis
+              {session ? 'Ir para o Chat' : 'Experimente Grátis'}
             </Button>
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/auth')}
               className="text-base"
             >
               Saiba Mais
@@ -134,10 +156,10 @@ const LandingPage: React.FC = () => {
           </p>
           <Button 
             size="lg" 
-            onClick={() => navigate('/login')}
+            onClick={handleAuthAction}
             className="shadow-lg text-base"
           >
-            Começar Agora <ArrowRight className="ml-2 h-4 w-4" />
+            {session ? 'Ir para o Chat' : 'Começar Agora'} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </section>

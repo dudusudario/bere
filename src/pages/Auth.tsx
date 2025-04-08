@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from '@/components/ui/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
@@ -31,6 +32,29 @@ const Auth: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    // Check for existing session on component mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        navigate('/chat');
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (session) {
+          navigate('/chat');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -52,25 +76,27 @@ const Auth: React.FC = () => {
   const onLoginSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
-      // Simulated login - Replace with actual authentication when implementing backend
-      console.log('Login submission:', values);
-      
-      // For now, we'll just redirect to the chat page
-      setTimeout(() => {
-        toast({
-          title: 'Login bem-sucedido',
-          description: 'Bem-vindo de volta!',
-        });
-        navigate('/chat');
-        setIsLoading(false);
-      }, 1000);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Login bem-sucedido',
+        description: 'Bem-vindo de volta!',
+      });
     } catch (error) {
       console.error('Login error:', error);
       toast({
         variant: 'destructive',
         title: 'Erro no login',
-        description: 'Ocorreu um erro. Tente novamente.',
+        description: error.message || 'Ocorreu um erro. Tente novamente.',
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -78,26 +104,62 @@ const Auth: React.FC = () => {
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
     try {
-      // Simulated registration - Replace with actual registration when implementing backend
-      console.log('Register submission:', values);
-      
-      // For now, we'll just redirect to the chat page
-      setTimeout(() => {
-        toast({
-          title: 'Registro bem-sucedido',
-          description: 'Sua conta foi criada com sucesso!',
-        });
-        navigate('/chat');
-        setIsLoading(false);
-      }, 1000);
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.name,
+          },
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Registro bem-sucedido',
+        description: data.user?.identities?.length === 0 
+          ? 'Você já tem uma conta. Tente fazer login.'
+          : 'Sua conta foi criada com sucesso!',
+      });
+
+      // Switch to login tab if user already exists
+      if (data.user?.identities?.length === 0) {
+        setActiveTab('login');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       toast({
         variant: 'destructive',
         title: 'Erro no registro',
-        description: 'Ocorreu um erro. Tente novamente.',
+        description: error.message || 'Ocorreu um erro. Tente novamente.',
       });
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/chat'
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro no login com Google',
+        description: error.message || 'Ocorreu um erro. Tente novamente.',
+      });
     }
   };
 
@@ -123,6 +185,30 @@ const Auth: React.FC = () => {
             <CardDescription>Faça login ou crie sua conta para continuar</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleGoogleLogin} 
+                disabled={isLoading} 
+                className="w-full flex items-center justify-center"
+              >
+                <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                  <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+                </svg>
+                Continuar com Google
+              </Button>
+            </div>
+
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
             <Tabs 
               defaultValue="login" 
               value={activeTab} 

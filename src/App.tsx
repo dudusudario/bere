@@ -3,7 +3,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
@@ -14,9 +16,34 @@ import EmailConfirmation from "./pages/EmailConfirmation";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 
-// Create the QueryClient as a component variable, not global
 function App() {
   const queryClient = new QueryClient();
+  const [session, setSession] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setIsLoading(false);
+    };
+
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -26,10 +53,22 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/chat" element={<Index />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/profile-setup" element={<ProfileSetup />} />
+            <Route
+              path="/chat"
+              element={session ? <Index /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/profile"
+              element={session ? <UserProfile /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/admin"
+              element={session ? <AdminPanel /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/profile-setup"
+              element={session ? <ProfileSetup /> : <Navigate to="/auth" />}
+            />
             <Route path="/email-confirmation" element={<EmailConfirmation />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Login />} />

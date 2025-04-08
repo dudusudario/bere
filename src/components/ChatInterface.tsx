@@ -1,10 +1,11 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatMessage from './ChatMessage';
 import MessageInput from './MessageInput';
 import FileUpload from './FileUpload';
 import TypingIndicator from './TypingIndicator';
-import { useChat, type Message, type FilePreview } from '../hooks/useChat';
+import { useChat } from '../hooks/useChat';
+import { Loader2 } from 'lucide-react';
 
 const ChatInterface: React.FC = () => {
   const userPhone = localStorage.getItem('userPhone') || '';
@@ -12,20 +13,33 @@ const ChatInterface: React.FC = () => {
   const {
     messages,
     isLoading,
+    isLoadingHistory,
     selectedFiles,
     chatContainerRef,
     sendMessage,
+    loadMessageHistory,
     handleFileChange,
     removeFile,
     clearFiles,
     toggleFavorite,
-    copyMessageToClipboard
+    copyMessageToClipboard,
+    deleteMessage
   } = useChat();
+
+  useEffect(() => {
+    if (userPhone) {
+      loadMessageHistory(userPhone);
+    }
+  }, [userPhone, loadMessageHistory]);
 
   // Função para enviar mensagem com o número de telefone
   const handleSendMessage = async (content: string) => {
     // Enviamos o número de telefone e o conteúdo separadamente
     await sendMessage(content, userPhone);
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    deleteMessage(messageId);
   };
 
   return (
@@ -34,14 +48,27 @@ const ChatInterface: React.FC = () => {
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
-        {messages.map((message) => (
-          <ChatMessage
-            key={message.id}
-            message={message}
-            onToggleFavorite={() => toggleFavorite(message.id)}
-            onCopyToClipboard={() => copyMessageToClipboard(message.id)}
-          />
-        ))}
+        {isLoadingHistory ? (
+          <div className="flex items-center justify-center h-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Carregando histórico...</span>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+            <p className="mb-2">Bem-vindo à sua assistente pessoal!</p>
+            <p>Envie uma mensagem para iniciar a conversa.</p>
+          </div>
+        ) : (
+          messages.map((message) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              onToggleFavorite={() => toggleFavorite(message.id)}
+              onCopyToClipboard={() => copyMessageToClipboard(message.id)}
+              onDelete={() => handleDeleteMessage(message.id)}
+            />
+          ))
+        )}
         {isLoading && <TypingIndicator />}
       </div>
 

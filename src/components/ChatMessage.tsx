@@ -1,14 +1,25 @@
 
 import React, { useState, useEffect } from 'react';
-import { Heart, Copy, Share2 } from 'lucide-react';
+import { Heart, Copy, Share2, Trash2 } from 'lucide-react';
 import { Message } from '@/hooks/useChat';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 interface ChatMessageProps {
   message: Message;
   onToggleFavorite: (messageId: string) => void;
   onCopyToClipboard: (messageId: string) => void;
+  onDelete: (messageId: string) => void;
   showTypingAnimation?: boolean;
 }
 
@@ -16,10 +27,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
   onToggleFavorite,
   onCopyToClipboard,
+  onDelete,
   showTypingAnimation = false
 }) => {
   const [displayText, setDisplayText] = useState<string>('');
   const [isComplete, setIsComplete] = useState<boolean>(!showTypingAnimation);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   
   useEffect(() => {
     if (!showTypingAnimation) {
@@ -44,6 +57,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     return () => clearInterval(typingInterval);
   }, [message.content, showTypingAnimation]);
+  
+  const handleDelete = () => {
+    onDelete(message.id);
+    setOpenDeleteDialog(false);
+  };
   
   return (
     <div 
@@ -95,19 +113,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         </div>
       </div>
       
-      {message.sender === 'ai' && isComplete && (
+      {isComplete && (
         <div className="flex space-x-2">
-          <Button 
-            onClick={() => onToggleFavorite(message.id)} 
-            variant="ghost" 
-            size="icon" 
-            className={cn(
-              "h-8 w-8 rounded-full",
-              message.isFavorite ? "text-red-500" : "text-muted-foreground"
-            )}
-          >
-            <Heart size={16} fill={message.isFavorite ? "currentColor" : "none"} />
-          </Button>
+          {message.sender === 'ai' && (
+            <Button 
+              onClick={() => onToggleFavorite(message.id)} 
+              variant="ghost" 
+              size="icon" 
+              className={cn(
+                "h-8 w-8 rounded-full",
+                message.isFavorite ? "text-red-500" : "text-muted-foreground"
+              )}
+            >
+              <Heart size={16} fill={message.isFavorite ? "currentColor" : "none"} />
+            </Button>
+          )}
           <Button 
             onClick={() => onCopyToClipboard(message.id)} 
             variant="ghost" 
@@ -123,8 +143,33 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           >
             <Share2 size={16} />
           </Button>
+          <Button 
+            onClick={() => setOpenDeleteDialog(true)}
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-full text-muted-foreground hover:text-red-500"
+          >
+            <Trash2 size={16} />
+          </Button>
         </div>
       )}
+      
+      <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar Mensagem</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja apagar esta mensagem? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -772,6 +772,36 @@ export type Database = {
         }
         Relationships: []
       }
+      message_history: {
+        Row: {
+          content: string
+          files: Json | null
+          id: string
+          is_favorite: boolean
+          sender: string
+          timestamp: string
+          user_phone: string
+        }
+        Insert: {
+          content: string
+          files?: Json | null
+          id?: string
+          is_favorite?: boolean
+          sender: string
+          timestamp?: string
+          user_phone: string
+        }
+        Update: {
+          content?: string
+          files?: Json | null
+          id?: string
+          is_favorite?: boolean
+          sender?: string
+          timestamp?: string
+          user_phone?: string
+        }
+        Relationships: []
+      }
       n8n_chat_histories: {
         Row: {
           id: number

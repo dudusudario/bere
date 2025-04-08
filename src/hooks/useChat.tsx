@@ -1,6 +1,7 @@
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export type Message = {
   id: string;
@@ -23,6 +24,7 @@ const WEBHOOK_URL = 'https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-a5a3-33
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FilePreview[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -36,30 +38,149 @@ export const useChat = () => {
     }
   }, []);
 
-  const addMessage = useCallback((content: string, sender: 'user' | 'ai', files?: File[]) => {
+  const loadMessageHistory = useCallback(async (userPhone: string) => {
+    if (!userPhone) return;
+    
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('message_history')
+        .select('*')
+        .eq('user_phone', userPhone)
+        .order('timestamp', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading message history:', error);
+        toast.error("Erro ao carregar histórico de mensagens");
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const formattedMessages: Message[] = data.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sender: msg.sender as 'user' | 'ai',
+          timestamp: new Date(msg.timestamp),
+          isFavorite: msg.is_favorite || false,
+          // Files can't be restored from database as File objects, but we can indicate they existed
+          files: undefined
+        }));
+        
+        setMessages(formattedMessages);
+        setTimeout(scrollToBottom, 100);
+      }
+    } catch (err) {
+      console.error('Error in loading message history:', err);
+      toast.error("Erro ao carregar histórico de mensagens");
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [scrollToBottom]);
+
+  const deleteMessage = useCallback(async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('message_history')
+        .delete()
+        .eq('id', messageId);
+      
+      if (error) {
+        console.error('Error deleting message:', error);
+        toast.error("Erro ao apagar mensagem");
+        return;
+      }
+      
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      toast.success("Mensagem apagada com sucesso");
+    } catch (err) {
+      console.error('Error in deleting message:', err);
+      toast.error("Erro ao apagar mensagem");
+    }
+  }, []);
+
+  const addMessage = useCallback(async (content: string, sender: 'user' | 'ai', files?: File[], userPhone?: string) => {
+    const newMessageId = generateId();
+    const timestamp = new Date();
+    
     const newMessage: Message = {
-      id: generateId(),
+      id: newMessageId,
       content,
       sender,
-      timestamp: new Date(),
+      timestamp,
       isFavorite: false,
       files
     };
 
     setMessages(prev => [...prev, newMessage]);
     setTimeout(scrollToBottom, 100);
-    return newMessage.id;
+    
+    // Store message in Supabase if userPhone is provided
+    if (userPhone) {
+      try {
+        // Convert files to a JSON structure if they exist
+        let filesJson = null;
+        if (files && files.length > 0) {
+          filesJson = files.map(file => ({
+            name: file.name,
+            type: file.type,
+            size: file.size
+          }));
+        }
+        
+        const { error } = await supabase
+          .from('message_history')
+          .insert({
+            user_phone: userPhone,
+            content,
+            sender,
+            is_favorite: false,
+            files: filesJson
+          });
+        
+        if (error) {
+          console.error('Error saving message to history:', error);
+        }
+      } catch (err) {
+        console.error('Error in saving message to history:', err);
+      }
+    }
+    
+    return newMessageId;
   }, [scrollToBottom]);
 
-  const toggleFavorite = useCallback((messageId: string) => {
+  const toggleFavorite = useCallback(async (messageId: string) => {
+    // Find the message to toggle
+    const message = messages.find(msg => msg.id === messageId);
+    if (!message) return;
+    
+    const newFavoriteStatus = !message.isFavorite;
+    
+    // Update state
     setMessages(prev => 
       prev.map(msg => 
         msg.id === messageId 
-          ? { ...msg, isFavorite: !msg.isFavorite } 
+          ? { ...msg, isFavorite: newFavoriteStatus } 
           : msg
       )
     );
-  }, []);
+    
+    // Update in Supabase if it's a UUID (database ID)
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId)) {
+      try {
+        const { error } = await supabase
+          .from('message_history')
+          .update({ is_favorite: newFavoriteStatus })
+          .eq('id', messageId);
+        
+        if (error) {
+          console.error('Error updating favorite status:', error);
+          toast.error("Erro ao atualizar status de favorito");
+        }
+      } catch (err) {
+        console.error('Error in toggling favorite:', err);
+      }
+    }
+  }, [messages]);
 
   const copyMessageToClipboard = useCallback((messageId: string) => {
     const message = messages.find(msg => msg.id === messageId);
@@ -145,7 +266,7 @@ export const useChat = () => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
     // Add user message
-    addMessage(content, 'user', selectedFiles.map(f => f.file));
+    await addMessage(content, 'user', selectedFiles.map(f => f.file), phoneNumber);
     
     setIsLoading(true);
     
@@ -171,10 +292,10 @@ export const useChat = () => {
       const responseText = await response.text();
       const parsedMessage = parseResponse(responseText);
       
-      addMessage(parsedMessage, 'ai');
+      await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
     } catch (error) {
       console.error('Error sending message:', error);
-      addMessage("Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.", 'ai');
+      await addMessage("Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.", 'ai', undefined, phoneNumber);
       toast.error("Erro ao enviar mensagem");
     } finally {
       setIsLoading(false);
@@ -185,14 +306,17 @@ export const useChat = () => {
   return {
     messages,
     isLoading,
+    isLoadingHistory,
     selectedFiles,
     chatContainerRef,
     sendMessage,
+    loadMessageHistory,
     handleFileChange,
     removeFile,
     clearFiles,
     toggleFavorite,
-    copyMessageToClipboard
+    copyMessageToClipboard,
+    deleteMessage
   };
 };
 

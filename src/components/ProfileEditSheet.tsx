@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -9,12 +9,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Upload } from 'lucide-react';
+import { Upload, Phone } from 'lucide-react';
 
 const profileFormSchema = z.object({
   full_name: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
   address: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres"),
   cpf_cnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 caracteres"),
+  phone: z.string()
+    .min(10, "Telefone deve ter pelo menos 10 dígitos")
+    .refine((val) => /^\d+$/.test(val), {
+      message: "O telefone deve conter apenas números",
+    }),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -29,13 +34,16 @@ const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({ open, onOpenChange 
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   
-  // For demonstration, we'll use the same mock data as in UserProfile.tsx
-  // In a real app, this would come from context or API
+  // Recupera o número de telefone do localStorage para inicializar o perfil
+  const storedPhone = localStorage.getItem('userPhone') || '';
+  
+  // Para demonstração, usaremos dados mock
   const [profile, setProfile] = useState({
     full_name: 'Demo User',
     address: 'Sample Address',
     cpf_cnpj: '12345678901',
-    profile_image: ''
+    profile_image: '',
+    phone: storedPhone,
   });
 
   const form = useForm<ProfileFormValues>({
@@ -44,16 +52,18 @@ const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({ open, onOpenChange 
       full_name: profile.full_name || "",
       address: profile.address || "",
       cpf_cnpj: profile.cpf_cnpj || "",
+      phone: profile.phone || "",
     },
   });
 
-  // Update form when profile data changes
-  React.useEffect(() => {
+  // Atualiza o formulário quando os dados do perfil mudam
+  useEffect(() => {
     if (profile) {
       form.reset({
         full_name: profile.full_name || "",
         address: profile.address || "",
         cpf_cnpj: profile.cpf_cnpj || "",
+        phone: profile.phone || "",
       });
     }
   }, [profile, form]);
@@ -62,13 +72,17 @@ const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({ open, onOpenChange 
     try {
       setIsLoading(true);
       
-      // Simulate saving profile data
+      // Salva o número de telefone no localStorage
+      localStorage.setItem('userPhone', data.phone);
+      
+      // Simula salvar os dados do perfil
       setTimeout(() => {
         setProfile({
           ...profile,
           full_name: data.full_name,
           address: data.address,
-          cpf_cnpj: data.cpf_cnpj
+          cpf_cnpj: data.cpf_cnpj,
+          phone: data.phone
         });
         
         toast({
@@ -78,7 +92,7 @@ const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({ open, onOpenChange 
         
         setIsLoading(false);
         
-        // Close the sheet after successful update
+        // Fecha o painel após atualização bem-sucedida
         onOpenChange(false);
       }, 1000);
       
@@ -197,6 +211,28 @@ const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({ open, onOpenChange 
                       <FormLabel>Nome completo</FormLabel>
                       <FormControl>
                         <Input placeholder="Seu nome completo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Phone className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            placeholder="Seu número de telefone" 
+                            {...field} 
+                            className="pl-8"
+                            type="tel"
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

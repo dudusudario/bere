@@ -6,7 +6,7 @@ import FileUpload from './FileUpload';
 import TypingIndicator from './TypingIndicator';
 import ProfileEditSheet from './ProfileEditSheet';
 import { useChat } from '../hooks/useChat';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Phone } from 'lucide-react';
 import { Button } from './ui/button';
 
 const ChatInterface: React.FC = () => {
@@ -48,7 +48,19 @@ const ChatInterface: React.FC = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
       {/* Profile button */}
-      <div className="flex justify-end p-2 border-b">
+      <div className="flex justify-between p-2 border-b">
+        {userPhone ? (
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Phone className="h-3 w-3 mr-1" />
+            <span>{userPhone}</span>
+          </div>
+        ) : (
+          <div className="flex items-center text-sm text-destructive">
+            <Phone className="h-3 w-3 mr-1" />
+            <span>Configure seu telefone no perfil</span>
+          </div>
+        )}
+        
         <Button 
           variant="ghost" 
           size="sm" 

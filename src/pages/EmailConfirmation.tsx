@@ -3,36 +3,44 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const EmailConfirmation: React.FC = () => {
-  const { user, profile, refreshProfile } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   
+  // Mock user data since we removed authentication
+  const user = {
+    id: '1',
+    email: 'user@example.com',
+  };
+  
+  // Mock profile data
+  const [profile, setProfile] = React.useState<{email_confirmed?: boolean}>({
+    email_confirmed: false
+  });
+  
   // This is a placeholder for the actual email confirmation flow
-  // In a real implementation, you'd use Supabase's built-in email confirmation
   const simulateEmailConfirmation = async () => {
     try {
       setIsLoading(true);
       
-      // Update the user profile to mark email as confirmed using type casting
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ email_confirmed: true } as any)
-        .eq('id', user?.id);
-        
-      if (error) throw error;
-      
-      // Refresh the profile to get the updated data
-      await refreshProfile();
+      // Simulate updating the profile
+      setProfile({ email_confirmed: true });
       
       toast({
         title: "Email confirmado",
         description: "Seu email foi confirmado com sucesso.",
       });
+
+      // Navigate to chat after confirmation
+      setTimeout(() => {
+        navigate('/chat');
+      }, 2000);
+      
     } catch (error: any) {
       toast({
         title: "Erro ao confirmar email",
@@ -92,8 +100,9 @@ const EmailConfirmation: React.FC = () => {
             variant="ghost" 
             className="text-primary hover:text-primary/80"
             disabled={isLoading}
+            onClick={() => navigate('/chat')}
           >
-            Reenviar email de confirmação
+            Voltar ao chat
           </Button>
         </CardFooter>
       </Card>

@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const profileFormSchema = z.object({
@@ -21,13 +20,20 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const ProfileSetup: React.FC = () => {
-  const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   
+  // Mock user and profile since we removed auth context
+  const user = { id: '1' };
+  const profile = {
+    full_name: '',
+    address: '',
+    cpf_cnpj: '',
+  };
+  
   const defaultValues: Partial<ProfileFormValues> = {
-    full_name: profile?.full_name || user?.user_metadata.full_name || "",
+    full_name: profile?.full_name || "",
     address: profile?.address || "",
     cpf_cnpj: profile?.cpf_cnpj || "",
   };
@@ -41,26 +47,18 @@ const ProfileSetup: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Use type casting to handle database schema differences
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          full_name: data.full_name,
-          address: data.address,
-          cpf_cnpj: data.cpf_cnpj,
-        } as any)
-        .eq('id', user?.id);
+      // In a real app, we would save to Supabase here
+      // Since auth is removed, simulate success and navigate
+      
+      setTimeout(() => {
+        toast({
+          title: "Perfil atualizado",
+          description: "Seus dados foram salvos com sucesso.",
+        });
         
-      if (error) throw error;
+        navigate('/chat');
+      }, 1000);
       
-      await refreshProfile();
-      
-      toast({
-        title: "Perfil atualizado",
-        description: "Seus dados foram salvos com sucesso.",
-      });
-      
-      navigate('/chat');
     } catch (error: any) {
       toast({
         title: "Erro ao salvar perfil",

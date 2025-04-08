@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Users, MessageCircle, Settings, User } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -19,18 +18,13 @@ interface UserWithProfile {
 
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, isAdmin } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  // Instead of using isAdmin from AuthContext, let's simplify for now
+  const isAdmin = true; // Simplified since we removed authentication
 
   useEffect(() => {
-    // Verificar se o usuário é um administrador
-    if (!isAdmin) {
-      navigate('/chat');
-      return;
-    }
-
     const fetchUsers = async () => {
       try {
         setLoading(true);
@@ -42,7 +36,7 @@ const AdminPanel: React.FC = () => {
           
         if (error) throw error;
         
-        // Obter detalhes de autenticação para cada usuário (nota: isso requer permissões admin)
+        // Obter detalhes de autenticação para cada usuário
         setUsers(data as unknown as UserWithProfile[]);
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
@@ -57,7 +51,7 @@ const AdminPanel: React.FC = () => {
     };
     
     fetchUsers();
-  }, [isAdmin, navigate, toast]);
+  }, [navigate, toast]);
   
   // Função para obter as iniciais do nome para o avatar
   const getInitials = (name: string | null) => {
@@ -68,6 +62,12 @@ const AdminPanel: React.FC = () => {
       .join('')
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  // Mock profile for display purposes since we removed auth
+  const profile = {
+    profile_image: '',
+    full_name: 'Admin User'
   };
 
   return (

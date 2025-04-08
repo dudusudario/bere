@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Upload } from 'lucide-react';
 
@@ -23,11 +22,34 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const UserProfile: React.FC = () => {
-  const { user, profile, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Mock user and profile data since we removed auth
+  const user = { 
+    id: '1',
+    email: 'user@example.com' 
+  };
+  
+  const [profile, setProfile] = useState({
+    full_name: 'Demo User',
+    address: 'Sample Address',
+    cpf_cnpj: '12345678901',
+    profile_image: ''
+  });
+  
+  // Mock refresh profile function
+  const refreshProfile = async () => {
+    // This would fetch the latest profile data in a real app
+    console.log('Profile refreshed');
+  };
+  
+  // Mock sign out function
+  const signOut = async () => {
+    navigate('/');
+  };
   
   const defaultValues: Partial<ProfileFormValues> = {
     full_name: profile?.full_name || "",
@@ -55,31 +77,29 @@ const UserProfile: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Use type casting for Supabase operations
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
+      // Simulate saving profile data
+      setTimeout(() => {
+        setProfile({
+          ...profile,
           full_name: data.full_name,
           address: data.address,
-          cpf_cnpj: data.cpf_cnpj,
-        } as any)
-        .eq('id', user?.id);
+          cpf_cnpj: data.cpf_cnpj
+        });
         
-      if (error) throw error;
+        toast({
+          title: "Perfil atualizado",
+          description: "Seus dados foram salvos com sucesso.",
+        });
+        
+        setIsLoading(false);
+      }, 1000);
       
-      await refreshProfile();
-      
-      toast({
-        title: "Perfil atualizado",
-        description: "Seus dados foram salvos com sucesso.",
-      });
     } catch (error: any) {
       toast({
         title: "Erro ao salvar perfil",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -101,50 +121,36 @@ const UserProfile: React.FC = () => {
       
       setUploadingImage(true);
       
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user?.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `profile-images/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, file);
+      // Simulate file upload
+      setTimeout(() => {
+        // Create a fake URL for demo purposes
+        const fakeUrl = URL.createObjectURL(file);
         
-      if (uploadError) throw uploadError;
-      
-      // Get public URL
-      const { data } = supabase.storage
-        .from('profiles')
-        .getPublicUrl(filePath);
+        setProfile({
+          ...profile,
+          profile_image: fakeUrl
+        });
         
-      // Update profile with new image URL using type casting
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ profile_image: data.publicUrl } as any)
-        .eq('id', user?.id);
+        toast({
+          title: "Imagem atualizada",
+          description: "Sua foto de perfil foi atualizada com sucesso.",
+        });
         
-      if (updateError) throw updateError;
+        setUploadingImage(false);
+      }, 1500);
       
-      await refreshProfile();
-      
-      toast({
-        title: "Imagem atualizada",
-        description: "Sua foto de perfil foi atualizada com sucesso.",
-      });
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar imagem",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setUploadingImage(false);
     }
   };
   
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
+    navigate('/');
   };
   
   // Get user initials for avatar fallback

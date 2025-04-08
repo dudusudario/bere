@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Paperclip, X } from 'lucide-react';
-import { FilePreview } from '@/hooks/useChat';
+import { FilePreview } from '@/hooks/chat/types';
 import { Button } from '@/components/ui/button';
 
 interface FileUploadProps {

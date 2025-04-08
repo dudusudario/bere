@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Heart, Copy, Share2, Trash2 } from 'lucide-react';
-import { Message } from '@/hooks/useChat';
+import { Message } from '@/hooks/chat/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 

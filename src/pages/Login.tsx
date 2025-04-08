@@ -5,9 +5,9 @@ import { useNavigate } from 'react-router-dom';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   
-  // Redirecionar para a página principal quando tentar acessar o login
+  // Redirect to the Auth page instead of directly to chat
   useEffect(() => {
-    navigate('/chat');
+    navigate('/auth');
   }, [navigate]);
 
   return (

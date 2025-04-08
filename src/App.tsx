@@ -11,6 +11,8 @@ import UserProfile from "./pages/UserProfile";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
+import Auth from "./pages/Auth";
+import Login from "./pages/Login";
 
 // Create the QueryClient as a component variable, not global
 function App() {
@@ -29,6 +31,8 @@ function App() {
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/email-confirmation" element={<EmailConfirmation />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Login />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

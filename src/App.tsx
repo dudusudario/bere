@@ -12,27 +12,30 @@ import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
 
-const queryClient = new QueryClient();
+// Create the QueryClient as a component variable, not global
+function App() {
+  const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/chat" element={<Index />} />
-          <Route path="/profile" element={<UserProfile />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/profile-setup" element={<ProfileSetup />} />
-          <Route path="/email-confirmation" element={<EmailConfirmation />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/chat" element={<Index />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/profile-setup" element={<ProfileSetup />} />
+            <Route path="/email-confirmation" element={<EmailConfirmation />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

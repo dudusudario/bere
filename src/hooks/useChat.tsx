@@ -118,6 +118,29 @@ export const useChat = () => {
     setSelectedFiles([]);
   }, []);
 
+  const parseResponse = (responseText: string) => {
+    try {
+      // Tenta analisar a resposta como JSON
+      const jsonResponse = JSON.parse(responseText);
+      
+      // Se for um array com objetos que têm uma propriedade 'message'
+      if (Array.isArray(jsonResponse) && jsonResponse.length > 0 && jsonResponse[0].message) {
+        return jsonResponse[0].message;
+      }
+      
+      // Se for um objeto com uma propriedade 'message'
+      if (jsonResponse.message) {
+        return jsonResponse.message;
+      }
+      
+      // Retorna o JSON formatado se não conseguir extrair a mensagem
+      return JSON.stringify(jsonResponse, null, 2);
+    } catch (e) {
+      // Se não for um JSON válido, retorna o texto original
+      return responseText;
+    }
+  };
+
   const sendMessage = useCallback(async (content: string, phoneNumber: string) => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
@@ -145,8 +168,10 @@ export const useChat = () => {
         throw new Error(`Erro na requisição: ${response.status}`);
       }
       
-      const data = await response.text();
-      addMessage(data || "Desculpe, não consegui processar sua solicitação.", 'ai');
+      const responseText = await response.text();
+      const parsedMessage = parseResponse(responseText);
+      
+      addMessage(parsedMessage, 'ai');
     } catch (error) {
       console.error('Error sending message:', error);
       addMessage("Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.", 'ai');

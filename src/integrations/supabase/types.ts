@@ -226,6 +226,27 @@ export type Database = {
           },
         ]
       }
+      assistente_pessoal: {
+        Row: {
+          created_at: string
+          id: number
+          nome: string | null
+          telefone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          nome?: string | null
+          telefone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          nome?: string | null
+          telefone?: string | null
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           created_at: string

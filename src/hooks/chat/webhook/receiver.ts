@@ -12,7 +12,7 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
   
   console.log('Setting up message receiver for URL:', receivingWebhookUrl);
   
-  // Define startPolling function before using it
+  // Define the polling function at the beginning of the scope
   const startPolling = () => {
     // Add a message handler for incoming webhook messages
     window.addEventListener('message', (event) => {

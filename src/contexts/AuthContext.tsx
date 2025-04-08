@@ -38,8 +38,8 @@ const AuthContext = createContext<AuthContextProps>({
 
 export const useAuth = () => useContext(AuthContext);
 
-// Lista de emails de administradores
-const ADMIN_EMAILS = ['seu-email@gmail.com']; // Adicione aqui o seu email de administrador
+// Lista de emails de administradores - Adicione seu email aqui
+const ADMIN_EMAILS = ['seu-email@gmail.com']; // Substitua 'seu-email@gmail.com' pelo seu email real
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);

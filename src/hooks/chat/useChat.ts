@@ -8,7 +8,7 @@ export const useChat = () => {
   const { messages, isLoading, chatContainerRef, addMessage, toggleFavorite, copyMessageToClipboard, deleteMessage } = useChatMessages();
   const { selectedFiles, handleFileChange, removeFile, clearFiles } = useFileHandler();
   const { sendMessage } = useChatSender({ addMessage, selectedFiles, clearFiles });
-  const { isLoadingHistory, loadMessageHistory } = useMessageHistory((messages) => {
+  const { isLoadingHistory, loadMessageHistory } = useMessageHistory(() => {
     // This will be used as a callback after loading messages
     setTimeout(() => {
       if (chatContainerRef.current) {

@@ -49,10 +49,5 @@ export const useFileHandler = () => {
     setSelectedFiles([]);
   }, []);
 
-  return {
-    selectedFiles,
-    handleFileChange,
-    removeFile,
-    clearFiles
-  };
+  return { selectedFiles, handleFileChange, removeFile, clearFiles };
 };

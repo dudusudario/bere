@@ -1,4 +1,3 @@
-
 import { Message, FilePreview } from "./types";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -6,25 +5,35 @@ import { toast } from 'sonner';
 export const WEBHOOK_URL = 'https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-a5a3-33053921db0e';
 
 export const generateId = (): string => {
-  return Math.random().toString(36).substring(2, 15);
+  // Generate a proper UUID for compatibility with Supabase
+  return crypto.randomUUID();
 };
 
 export const parseResponse = (responseText: string): string => {
   try {
     const jsonResponse = JSON.parse(responseText);
     
+    // Handle array of messages (fractional messages)
     if (Array.isArray(jsonResponse) && jsonResponse.length > 0) {
-      if (jsonResponse[0].message) {
-        return jsonResponse.map(item => item.message).join('\n\n');
+      // Check if we have message objects with message property
+      if (jsonResponse[0].message !== undefined) {
+        // Join all messages, preserving formatting
+        return jsonResponse
+          .map(item => item.message)
+          .filter(msg => msg) // Filter out any undefined/null/empty messages
+          .join('\n\n');
       }
     }
     
+    // Handle single message object
     if (jsonResponse.message) {
       return jsonResponse.message;
     }
     
+    // If the structure doesn't match expected format, return the full JSON
     return JSON.stringify(jsonResponse, null, 2);
   } catch (e) {
+    // If parsing fails, return the original text
     return responseText;
   }
 };

@@ -51,10 +51,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route
-              path="/chat"
-              element={session ? <Index /> : <Navigate to="/" />}
-            />
+            <Route path="/chat" element={<Index />} />
             <Route
               path="/profile"
               element={session ? <UserProfile /> : <Navigate to="/" />}

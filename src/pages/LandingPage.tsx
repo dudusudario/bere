@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,21 +21,11 @@ const LandingPage: React.FC = () => {
   }, []);
 
   const handleAuthAction = () => {
-    if (session) {
-      navigate('/chat');
-    } else {
-      // Autenticação automática com conta anônima se não estiver logado
-      handleAnonymousLogin();
-    }
+    navigate('/chat');
   };
 
   const handleAnonymousLogin = async () => {
-    try {
-      // Se o usuário não estiver logado, navegamos direto para o chat sem autenticação
-      navigate('/chat');
-    } catch (error) {
-      console.error('Erro ao acessar:', error);
-    }
+    navigate('/chat');
   };
 
   return (
@@ -52,13 +41,13 @@ const LandingPage: React.FC = () => {
             className="hidden md:flex"
             onClick={handleAuthAction}
           >
-            {session ? 'Dashboard' : 'Acessar'}
+            {session ? 'Dashboard' : 'Acessar Chat'}
           </Button>
           <Button 
             onClick={handleAuthAction}
             className="shadow-lg"
           >
-            {session ? 'Ir para o Chat' : 'Começar Agora'} <ArrowRight className="ml-2 h-4 w-4" />
+            Acessar Chat <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -78,7 +67,7 @@ const LandingPage: React.FC = () => {
               onClick={handleAuthAction}
               className="shadow-lg text-base"
             >
-              {session ? 'Ir para o Chat' : 'Experimente Grátis'}
+              Acessar Agora
             </Button>
             <Button 
               variant="outline" 
@@ -169,7 +158,7 @@ const LandingPage: React.FC = () => {
             onClick={handleAuthAction}
             className="shadow-lg text-base"
           >
-            {session ? 'Ir para o Chat' : 'Começar Agora'} <ArrowRight className="ml-2 h-4 w-4" />
+            Acessar Agora <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </section>

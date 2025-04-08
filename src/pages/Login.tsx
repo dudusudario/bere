@@ -35,9 +35,11 @@ const Login: React.FC = () => {
     try {
       console.log("Iniciando processo de login com Google...");
       
-      // URL absoluta para redirecionamento
-      const redirectTo = 'https://www.berenice.ai/chat';
-      console.log("URL de redirecionamento configurada:", redirectTo);
+      // Definindo URLs completas para garantir que o redirecionamento funcione
+      const redirectTo = window.location.origin + '/chat';
+      console.log("URL de redirecionamento calculada:", redirectTo);
+      console.log("URL atual:", window.location.href);
+      console.log("Origem:", window.location.origin);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

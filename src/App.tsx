@@ -13,8 +13,6 @@ import UserProfile from "./pages/UserProfile";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
-import Auth from "./pages/Auth";
-import Login from "./pages/Login";
 
 function App() {
   const queryClient = new QueryClient();
@@ -55,23 +53,22 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route
               path="/chat"
-              element={session ? <Index /> : <Navigate to="/auth" />}
+              element={session ? <Index /> : <Navigate to="/" />}
             />
             <Route
               path="/profile"
-              element={session ? <UserProfile /> : <Navigate to="/auth" />}
+              element={session ? <UserProfile /> : <Navigate to="/" />}
             />
             <Route
               path="/admin"
-              element={session ? <AdminPanel /> : <Navigate to="/auth" />}
+              element={session ? <AdminPanel /> : <Navigate to="/" />}
             />
             <Route
               path="/profile-setup"
-              element={session ? <ProfileSetup /> : <Navigate to="/auth" />}
+              element={session ? <ProfileSetup /> : <Navigate to="/" />}
             />
             <Route path="/email-confirmation" element={<EmailConfirmation />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login" element={<Login />} />
+            {/* Rotas de autenticação removidas */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

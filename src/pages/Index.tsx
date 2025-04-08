@@ -14,18 +14,14 @@ const Index: React.FC = () => {
   useEffect(() => {
     // Check if user is authenticated
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate('/auth');
-      } else {
+      if (session) {
         setUser(session.user);
       }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/auth');
-      } else if (session) {
+      if (session) {
         setUser(session.user);
       }
     });
@@ -51,10 +47,7 @@ const Index: React.FC = () => {
     }
   };
 
-  if (!user) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
-
+  // Renderiza a interface de chat mesmo sem usuário autenticado
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b bg-background sticky top-0 z-10">
@@ -67,9 +60,11 @@ const Index: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate('/')} title="Página inicial">
               <Home className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
-              <LogOut className="h-5 w-5" />
-            </Button>
+            {user && (
+              <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
       </header>

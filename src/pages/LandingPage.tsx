@@ -25,7 +25,17 @@ const LandingPage: React.FC = () => {
     if (session) {
       navigate('/chat');
     } else {
-      navigate('/auth');
+      // Autenticação automática com conta anônima se não estiver logado
+      handleAnonymousLogin();
+    }
+  };
+
+  const handleAnonymousLogin = async () => {
+    try {
+      // Se o usuário não estiver logado, navegamos direto para o chat sem autenticação
+      navigate('/chat');
+    } catch (error) {
+      console.error('Erro ao acessar:', error);
     }
   };
 
@@ -42,7 +52,7 @@ const LandingPage: React.FC = () => {
             className="hidden md:flex"
             onClick={handleAuthAction}
           >
-            {session ? 'Dashboard' : 'Login'}
+            {session ? 'Dashboard' : 'Acessar'}
           </Button>
           <Button 
             onClick={handleAuthAction}
@@ -73,7 +83,7 @@ const LandingPage: React.FC = () => {
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/chat')}
               className="text-base"
             >
               Saiba Mais

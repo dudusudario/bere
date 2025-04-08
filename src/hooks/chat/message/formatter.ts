@@ -12,8 +12,13 @@ export const parseResponse = (responseText: string): string => {
     // Tenta parsear como JSON
     const jsonResponse = JSON.parse(responseText);
     
-    // Handle array of messages (fractional messages)
+    // Handle array with 'output' field which is specific to the AI agent response format
     if (Array.isArray(jsonResponse) && jsonResponse.length > 0) {
+      // Check specifically for the 'output' field in the first item
+      if (jsonResponse[0].output !== undefined) {
+        return jsonResponse[0].output;
+      }
+      
       // Check if we have message objects with message property
       if (jsonResponse[0].message !== undefined) {
         // Join all messages, preserving formatting without JSON
@@ -70,3 +75,4 @@ export const parseResponse = (responseText: string): string => {
     return responseText;
   }
 };
+

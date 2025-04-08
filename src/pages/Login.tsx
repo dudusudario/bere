@@ -28,10 +28,12 @@ const Login: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      // Use the site URL registered in Supabase
+      const siteUrl = 'https://www.berenice.ai';
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/chat',
+          redirectTo: `${siteUrl}/chat`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

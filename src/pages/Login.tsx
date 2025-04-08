@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { toast } from '@/components/ui/use-toast';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     // Verificar se o usuário já está autenticado
@@ -33,13 +34,12 @@ const Login: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      setIsLoading(true);
       console.log("Iniciando processo de login com Google...");
       
-      // Usar exatamente a URL que você configurou no Google Console
-      const redirectTo = 'https://www.berenice.ai/chat';
-      console.log("URL de redirecionamento configurada:", redirectTo);
-      console.log("URL atual:", window.location.href);
-      console.log("Origem:", window.location.origin);
+      // Usar a URL atual para determinar o redirecionamento
+      const redirectTo = new URL('/chat', window.location.origin).toString();
+      console.log("URL de redirecionamento:", redirectTo);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -68,8 +68,10 @@ const Login: React.FC = () => {
       toast({
         variant: 'destructive',
         title: 'Erro no login com Google',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
+        description: 'Ocorreu um erro ao conectar com o Google. Verifique sua conexão ou tente novamente mais tarde.',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -83,17 +85,19 @@ const Login: React.FC = () => {
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center mb-4 shadow-lg"
           variant="outline"
+          disabled={isLoading}
         >
           <svg className="mr-2 h-5 w-5" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
             <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
           </svg>
-          Entrar com Google
+          {isLoading ? 'Conectando...' : 'Entrar com Google'}
         </Button>
         
         <Button 
           onClick={() => navigate('/auth')}
           variant="default"
           className="w-full"
+          disabled={isLoading}
         >
           Entrar com Email
         </Button>
@@ -102,6 +106,7 @@ const Login: React.FC = () => {
           variant="ghost" 
           className="mt-4" 
           onClick={() => navigate('/')}
+          disabled={isLoading}
         >
           Voltar à Página Inicial
         </Button>

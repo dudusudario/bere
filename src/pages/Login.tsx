@@ -15,6 +15,15 @@ const Login: React.FC = () => {
         navigate('/chat');
       }
     });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        navigate('/chat');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleGoogleLogin = async () => {
@@ -31,6 +40,7 @@ const Login: React.FC = () => {
       });
       
       if (error) {
+        console.error('Google login error:', error);
         throw error;
       }
     } catch (error) {

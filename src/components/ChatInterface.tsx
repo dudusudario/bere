@@ -5,7 +5,7 @@ import MessageInput from './MessageInput';
 import FileUpload from './FileUpload';
 import TypingIndicator from './TypingIndicator';
 import ProfileEditSheet from './ProfileEditSheet';
-import { useChat } from '../hooks/useChat';
+import { useChat } from '../hooks/chat';
 import { Loader2, User, Phone } from 'lucide-react';
 import { Button } from './ui/button';
 

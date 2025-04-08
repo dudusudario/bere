@@ -1,3 +1,4 @@
+
 import { Message } from "./types";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -34,13 +35,14 @@ export const generateId = (): string => {
 
 export const parseResponse = (responseText: string): string => {
   try {
+    // Tenta parsear como JSON
     const jsonResponse = JSON.parse(responseText);
     
     // Handle array of messages (fractional messages)
     if (Array.isArray(jsonResponse) && jsonResponse.length > 0) {
       // Check if we have message objects with message property
       if (jsonResponse[0].message !== undefined) {
-        // Join all messages, preserving formatting
+        // Join all messages, preserving formatting without JSON
         return jsonResponse
           .map(item => item.message)
           .filter(msg => msg) // Filter out any undefined/null/empty messages
@@ -53,10 +55,28 @@ export const parseResponse = (responseText: string): string => {
       return jsonResponse.message;
     }
     
-    // If the structure doesn't match expected format, return the full JSON
-    return JSON.stringify(jsonResponse, null, 2);
+    // Se o JSON não tem o formato esperado mas parece ser uma string,
+    // retorna o texto diretamente se for uma propriedade do objeto
+    if (typeof jsonResponse === 'object') {
+      // Tenta encontrar a primeira propriedade string no objeto
+      const firstStringValue = Object.values(jsonResponse).find(
+        value => typeof value === 'string'
+      );
+      
+      if (firstStringValue) {
+        return firstStringValue;
+      }
+    }
+    
+    // Se for uma string simples no JSON, retorna ela diretamente
+    if (typeof jsonResponse === 'string') {
+      return jsonResponse;
+    }
+    
+    // Em último caso, retorna o texto original
+    return responseText;
   } catch (e) {
-    // If parsing fails, return the original text
+    // Se não for JSON, retorna o texto original sem alterações
     return responseText;
   }
 };

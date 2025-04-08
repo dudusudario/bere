@@ -12,6 +12,7 @@ import { Button } from './ui/button';
 const ChatInterface: React.FC = () => {
   const userPhone = localStorage.getItem('userPhone') || '';
   const [profileOpen, setProfileOpen] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   
   const {
     messages,
@@ -30,9 +31,16 @@ const ChatInterface: React.FC = () => {
   } = useChat();
 
   useEffect(() => {
-    if (userPhone) {
-      loadMessageHistory(userPhone);
-    }
+    const loadHistory = async () => {
+      if (userPhone) {
+        await loadMessageHistory(userPhone);
+        setHistoryLoaded(true);
+      } else {
+        setHistoryLoaded(true); // Marca como carregado mesmo sem telefone
+      }
+    };
+    
+    loadHistory();
   }, [userPhone, loadMessageHistory]);
 
   // Função para enviar mensagem com o número de telefone
@@ -77,7 +85,7 @@ const ChatInterface: React.FC = () => {
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
-        {isLoadingHistory ? (
+        {isLoadingHistory && !historyLoaded ? (
           <div className="flex items-center justify-center h-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="ml-2 text-muted-foreground">Carregando histórico...</span>

@@ -26,6 +26,7 @@ export const useMessageHistory = (scrollToBottomFn?: () => void) => {
       if (error) {
         console.error('Error loading message history:', error);
         toast.error("Erro ao carregar histórico de mensagens");
+        setIsLoadingHistory(false);
         return [];
       }
       
@@ -42,21 +43,23 @@ export const useMessageHistory = (scrollToBottomFn?: () => void) => {
           files: undefined
         }));
         
+        // Adicionar um pequeno atraso antes de chamar scrollToBottom para garantir que o DOM foi atualizado
         if (scrollToBottomFn) {
-          setTimeout(scrollToBottomFn, 100);
+          setTimeout(scrollToBottomFn, 300);
         }
         
+        setIsLoadingHistory(false);
         return formattedMessages;
       } else {
         console.log('No message history found');
+        setIsLoadingHistory(false);
         return [];
       }
     } catch (err) {
       console.error('Error in loading message history:', err);
       toast.error("Erro ao carregar histórico de mensagens");
-      return [];
-    } finally {
       setIsLoadingHistory(false);
+      return [];
     }
   }, [scrollToBottomFn]);
   

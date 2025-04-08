@@ -17,6 +17,7 @@ export const useChatMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const webhookInitializedRef = useRef<boolean>(false);
 
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
@@ -26,6 +27,14 @@ export const useChatMessages = () => {
 
   // Start the webhook heartbeat and message receiver when the component mounts
   useEffect(() => {
+    // Evitar inicialização múltipla do webhook (corrige problema de carregamentos intermitentes)
+    if (webhookInitializedRef.current) {
+      return;
+    }
+    
+    webhookInitializedRef.current = true;
+    console.log('Initializing webhook and message receiver');
+    
     keepWebhookAlive();
     
     // Setup message receiver from HTTP endpoint

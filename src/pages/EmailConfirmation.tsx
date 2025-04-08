@@ -18,10 +18,10 @@ const EmailConfirmation: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Update the user profile to mark email as confirmed
+      // Update the user profile to mark email as confirmed using type casting
       const { error } = await supabase
         .from('user_profiles')
-        .update({ email_confirmed: true })
+        .update({ email_confirmed: true } as any)
         .eq('id', user?.id);
         
       if (error) throw error;

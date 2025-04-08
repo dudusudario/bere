@@ -55,13 +55,14 @@ const UserProfile: React.FC = () => {
     try {
       setIsLoading(true);
       
+      // Use type casting for Supabase operations
       const { error } = await supabase
         .from('user_profiles')
         .update({
           full_name: data.full_name,
           address: data.address,
           cpf_cnpj: data.cpf_cnpj,
-        })
+        } as any)
         .eq('id', user?.id);
         
       if (error) throw error;
@@ -116,10 +117,10 @@ const UserProfile: React.FC = () => {
         .from('profiles')
         .getPublicUrl(filePath);
         
-      // Update profile with new image URL
+      // Update profile with new image URL using type casting
       const { error: updateError } = await supabase
         .from('user_profiles')
-        .update({ profile_image: data.publicUrl })
+        .update({ profile_image: data.publicUrl } as any)
         .eq('id', user?.id);
         
       if (updateError) throw updateError;

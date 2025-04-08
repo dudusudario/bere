@@ -13,13 +13,15 @@ interface AuthContextProps {
   refreshProfile: () => Promise<void>;
 }
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   full_name: string | null;
   address: string | null;
   cpf_cnpj: string | null;
   profile_image: string | null;
   email_confirmed: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -44,6 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) return;
       
+      // Using type casting to handle the user_profiles table that exists in the database
+      // but isn't properly reflected in the generated types
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -51,7 +55,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
       
       if (error) throw error;
-      setProfile(data as UserProfile);
+      
+      // Cast the response to our UserProfile type
+      setProfile(data as unknown as UserProfile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }

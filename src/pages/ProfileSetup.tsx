@@ -41,13 +41,14 @@ const ProfileSetup: React.FC = () => {
     try {
       setIsLoading(true);
       
+      // Use type casting to handle database schema differences
       const { error } = await supabase
         .from('user_profiles')
         .update({
           full_name: data.full_name,
           address: data.address,
           cpf_cnpj: data.cpf_cnpj,
-        })
+        } as any)
         .eq('id', user?.id);
         
       if (error) throw error;

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -93,6 +92,13 @@ const Auth: React.FC = () => {
           errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
         } else if (error.message.includes('Email not confirmed')) {
           errorMessage = 'Email não confirmado. Por favor, verifique sua caixa de entrada.';
+          
+          // Store the email for the confirmation page
+          localStorage.setItem('pendingConfirmationEmail', values.email);
+          
+          // Redirect to email confirmation page
+          navigate('/email-confirmation');
+          return;
         }
         
         toast({
@@ -163,10 +169,16 @@ const Auth: React.FC = () => {
         });
         setActiveTab('login');
       } else {
+        // Store the email for confirmation page
+        localStorage.setItem('pendingConfirmationEmail', values.email);
+        
         toast({
           title: 'Registro bem-sucedido',
           description: 'Sua conta foi criada! Verifique seu email para confirmar o cadastro.',
         });
+        
+        // Redirect user to email confirmation page
+        navigate('/email-confirmation');
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -182,7 +194,8 @@ const Auth: React.FC = () => {
       console.log("Iniciando processo de login com Google...");
       
       // Usar a URL atual para determinar o redirecionamento
-      const redirectTo = new URL('/chat', window.location.origin).toString();
+      const currentOrigin = window.location.origin;
+      const redirectTo = `${currentOrigin}/chat`;
       console.log("URL de redirecionamento:", redirectTo);
       
       const { data, error } = await supabase.auth.signInWithOAuth({

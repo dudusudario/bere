@@ -2,7 +2,8 @@
 import { useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { FilePreview } from './types';
-import { WEBHOOK_URL, parseResponse } from './utils';
+import { WEBHOOK_URL } from './webhook/urls';
+import { parseResponse } from './message/formatter';
 
 interface UseChatSenderProps {
   addMessage: (content: string, sender: 'user' | 'ai', files?: File[], userPhone?: string) => Promise<string>;

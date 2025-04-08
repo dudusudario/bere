@@ -6,7 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from 'sonner';
 import { Settings, RefreshCw, Copy, Check } from 'lucide-react';
-import { getReceivingWebhookUrl, saveReceivingWebhookUrl, generateReceivingWebhookUrl, WEBHOOK_URL } from '@/hooks/chat/utils';
+import { 
+  getReceivingWebhookUrl, 
+  saveReceivingWebhookUrl, 
+  generateReceivingWebhookUrl, 
+  WEBHOOK_URL 
+} from '@/hooks/chat/webhook/urls';
 
 const WebhookConfig: React.FC = () => {
   const [sendingWebhookUrl, setSendingWebhookUrl] = useState(WEBHOOK_URL);

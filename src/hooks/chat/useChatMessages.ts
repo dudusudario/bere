@@ -3,15 +3,20 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Message } from './types';
 import { 
-  generateId, 
+  generateId 
+} from './message/utils';
+import { 
   saveMessage, 
   saveFavoriteStatus, 
-  deleteMessageFromDb, 
+  deleteMessageFromDb 
+} from './storage/database';
+import {
   keepWebhookAlive,
   setupMessageReceiver,
   getReceivingWebhookUrl,
-  generateReceivingWebhookUrl
-} from './utils';
+  generateReceivingWebhookUrl,
+  WEBHOOK_URL
+} from './webhook/urls';
 
 export const useChatMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -35,7 +40,7 @@ export const useChatMessages = () => {
     webhookInitializedRef.current = true;
     console.log('Initializing webhook and message receiver');
     
-    keepWebhookAlive();
+    keepWebhookAlive(WEBHOOK_URL);
     
     // Setup message receiver from HTTP endpoint
     const userPhone = localStorage.getItem('userPhone') || '';

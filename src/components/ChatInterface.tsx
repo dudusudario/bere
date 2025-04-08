@@ -4,11 +4,14 @@ import ChatMessage from './ChatMessage';
 import MessageInput from './MessageInput';
 import FileUpload from './FileUpload';
 import TypingIndicator from './TypingIndicator';
+import ProfileEditSheet from './ProfileEditSheet';
 import { useChat } from '../hooks/useChat';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
+import { Button } from './ui/button';
 
 const ChatInterface: React.FC = () => {
   const userPhone = localStorage.getItem('userPhone') || '';
+  const [profileOpen, setProfileOpen] = useState(false);
   
   const {
     messages,
@@ -44,6 +47,20 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
+      {/* Profile button */}
+      <div className="flex justify-end p-2 border-b">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="flex items-center gap-2"
+          onClick={() => setProfileOpen(true)}
+        >
+          <User className="h-4 w-4" />
+          <span>Perfil</span>
+        </Button>
+        <ProfileEditSheet open={profileOpen} onOpenChange={setProfileOpen} />
+      </div>
+
       <div
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4"

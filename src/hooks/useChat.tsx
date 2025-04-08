@@ -19,6 +19,17 @@ export type FilePreview = {
   type: 'image' | 'video' | 'document';
 };
 
+// Define database message type to match our Supabase schema
+type DbMessage = {
+  id: string;
+  user_phone: string;
+  content: string;
+  sender: 'user' | 'ai';
+  timestamp: string;
+  is_favorite: boolean;
+  files: any | null;
+}
+
 const WEBHOOK_URL = 'https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-a5a3-33053921db0e';
 
 export const useChat = () => {
@@ -47,7 +58,7 @@ export const useChat = () => {
         .from('message_history')
         .select('*')
         .eq('user_phone', userPhone)
-        .order('timestamp', { ascending: true });
+        .order('timestamp', { ascending: true }) as { data: DbMessage[] | null, error: any };
       
       if (error) {
         console.error('Error loading message history:', error);
@@ -130,12 +141,13 @@ export const useChat = () => {
         const { error } = await supabase
           .from('message_history')
           .insert({
+            id: newMessageId,
             user_phone: userPhone,
             content,
             sender,
             is_favorite: false,
             files: filesJson
-          });
+          } as any);
         
         if (error) {
           console.error('Error saving message to history:', error);
@@ -164,21 +176,19 @@ export const useChat = () => {
       )
     );
     
-    // Update in Supabase if it's a UUID (database ID)
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId)) {
-      try {
-        const { error } = await supabase
-          .from('message_history')
-          .update({ is_favorite: newFavoriteStatus })
-          .eq('id', messageId);
-        
-        if (error) {
-          console.error('Error updating favorite status:', error);
-          toast.error("Erro ao atualizar status de favorito");
-        }
-      } catch (err) {
-        console.error('Error in toggling favorite:', err);
+    // Update in Supabase
+    try {
+      const { error } = await supabase
+        .from('message_history')
+        .update({ is_favorite: newFavoriteStatus } as any)
+        .eq('id', messageId);
+      
+      if (error) {
+        console.error('Error updating favorite status:', error);
+        toast.error("Erro ao atualizar status de favorito");
       }
+    } catch (err) {
+      console.error('Error in toggling favorite:', err);
     }
   }, [messages]);
 

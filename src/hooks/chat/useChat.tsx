@@ -4,7 +4,16 @@ import { toast } from 'sonner';
 import { Message } from './types';
 import { useMessageHistory } from './messageHistory';
 import { useFileHandler } from './fileHandler';
-import { WEBHOOK_URL, generateId, parseResponse, saveMessage, saveFavoriteStatus, deleteMessageFromDb, keepWebhookAlive } from './utils';
+import { 
+  WEBHOOK_URL, 
+  generateId, 
+  parseResponse, 
+  saveMessage, 
+  saveFavoriteStatus, 
+  deleteMessageFromDb, 
+  keepWebhookAlive,
+  setupMessageReceiver
+} from './utils';
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,6 +34,16 @@ export const useChat = () => {
   // Start the webhook heartbeat when the component mounts
   useEffect(() => {
     keepWebhookAlive();
+    
+    // Setup message receiver from HTTP endpoint
+    const userPhone = localStorage.getItem('userPhone') || '';
+    
+    if (userPhone) {
+      setupMessageReceiver(async (receivedMessage) => {
+        // Add the received message to the chat
+        await addMessage(receivedMessage, 'ai', undefined, userPhone);
+      });
+    }
   }, []);
 
   // Load message history wrapper

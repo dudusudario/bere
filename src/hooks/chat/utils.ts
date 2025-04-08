@@ -1,8 +1,19 @@
+
 import { Message, FilePreview } from "./types";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const WEBHOOK_URL = 'https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-a5a3-33053921db0e';
+
+// Get the receiving webhook URL from localStorage or use a default empty string
+export const getReceivingWebhookUrl = (): string => {
+  return localStorage.getItem('receivingWebhookUrl') || '';
+};
+
+// Save the receiving webhook URL to localStorage
+export const saveReceivingWebhookUrl = (url: string): void => {
+  localStorage.setItem('receivingWebhookUrl', url);
+};
 
 export const generateId = (): string => {
   // Generate a proper UUID for compatibility with Supabase
@@ -133,5 +144,56 @@ export const keepWebhookAlive = (): void => {
   // Limpar o intervalo quando a janela for fechada
   window.addEventListener('beforeunload', () => {
     clearInterval(heartbeatInterval);
+  });
+};
+
+// Configura um servidor para receber mensagens via HTTP POST
+export const setupMessageReceiver = (onMessageReceived: (message: string) => void): void => {
+  const receivingWebhookUrl = getReceivingWebhookUrl();
+  
+  if (!receivingWebhookUrl) {
+    console.log('Receiving webhook URL not configured');
+    return;
+  }
+  
+  // Configurar um EventSource para receber mensagens de um servidor de eventos
+  // Esta é uma abordagem alternativa caso o polling não seja ideal
+  const setupEventSource = () => {
+    try {
+      const eventSource = new EventSource(receivingWebhookUrl);
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && data.message) {
+            onMessageReceived(data.message);
+          }
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
+      };
+      
+      eventSource.onerror = (error) => {
+        console.error('EventSource failed:', error);
+        eventSource.close();
+        // Reconnect after a delay
+        setTimeout(setupEventSource, 5000);
+      };
+      
+      return eventSource;
+    } catch (error) {
+      console.error('Error setting up EventSource:', error);
+      return null;
+    }
+  };
+  
+  // Use o EventSource para receber mensagens em tempo real
+  const eventSource = setupEventSource();
+  
+  // Limpar recursos quando a janela for fechada
+  window.addEventListener('beforeunload', () => {
+    if (eventSource) {
+      eventSource.close();
+    }
   });
 };

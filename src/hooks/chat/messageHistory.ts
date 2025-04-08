@@ -8,9 +8,14 @@ export const useMessageHistory = (scrollToBottomFn?: () => void) => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   
   const loadMessageHistory = useCallback(async (userPhone: string): Promise<Message[]> => {
-    if (!userPhone) return [];
+    if (!userPhone) {
+      console.log('No user phone provided, skipping message history load');
+      return [];
+    }
     
     setIsLoadingHistory(true);
+    console.log('Loading message history for:', userPhone);
+    
     try {
       const { data, error } = await supabase
         .from('message_history')
@@ -25,6 +30,8 @@ export const useMessageHistory = (scrollToBottomFn?: () => void) => {
       }
       
       if (data && data.length > 0) {
+        console.log(`Loaded ${data.length} messages from history`);
+        
         const formattedMessages: Message[] = data.map(msg => ({
           id: msg.id,
           content: msg.content,
@@ -40,9 +47,10 @@ export const useMessageHistory = (scrollToBottomFn?: () => void) => {
         }
         
         return formattedMessages;
+      } else {
+        console.log('No message history found');
+        return [];
       }
-      
-      return [];
     } catch (err) {
       console.error('Error in loading message history:', err);
       toast.error("Erro ao carregar histórico de mensagens");

@@ -5,9 +5,20 @@ import { useChatMessages } from './useChatMessages';
 import { useChatSender } from './useChatSender';
 
 export const useChat = () => {
-  const { messages, isLoading, chatContainerRef, addMessage, toggleFavorite, copyMessageToClipboard, deleteMessage } = useChatMessages();
+  const { 
+    messages, 
+    isLoading, 
+    chatContainerRef, 
+    addMessage, 
+    setMessages, 
+    toggleFavorite, 
+    copyMessageToClipboard, 
+    deleteMessage 
+  } = useChatMessages();
+  
   const { selectedFiles, handleFileChange, removeFile, clearFiles } = useFileHandler();
   const { sendMessage } = useChatSender({ addMessage, selectedFiles, clearFiles });
+  
   const { isLoadingHistory, loadMessageHistory } = useMessageHistory(() => {
     // This will be used as a callback after loading messages
     setTimeout(() => {
@@ -17,6 +28,14 @@ export const useChat = () => {
     }, 100);
   });
 
+  // Function to load historical messages and set them
+  const loadAndSetMessageHistory = async (userPhone: string) => {
+    const historyMessages = await loadMessageHistory(userPhone);
+    if (historyMessages.length > 0) {
+      setMessages(historyMessages);
+    }
+  };
+
   return {
     messages,
     isLoading,
@@ -24,7 +43,7 @@ export const useChat = () => {
     selectedFiles,
     chatContainerRef,
     sendMessage,
-    loadMessageHistory,
+    loadMessageHistory: loadAndSetMessageHistory,
     handleFileChange,
     removeFile,
     clearFiles,

@@ -1,5 +1,4 @@
-
-import { Message, FilePreview } from "./types";
+import { Message } from "./types";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -10,14 +9,17 @@ export const generateReceivingWebhookUrl = (): string => {
   // Obtém a URL base da aplicação
   const baseUrl = window.location.origin;
   
+  // Gera um ID único para o webhook
+  const webhookId = Math.random().toString(36).substring(2, 15);
+  
   // Forma a URL completa para o endpoint de webhook na mesma aplicação
-  return `${baseUrl}/api/webhook/receive-messages`;
+  return `${baseUrl}/api/webhook/receive-messages/${webhookId}`;
 };
 
 // Get the receiving webhook URL from localStorage or generate a default one
 export const getReceivingWebhookUrl = (): string => {
   const savedUrl = localStorage.getItem('receivingWebhookUrl');
-  return savedUrl || generateReceivingWebhookUrl();
+  return savedUrl || '';
 };
 
 // Save the receiving webhook URL to localStorage
@@ -162,48 +164,41 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
   const receivingWebhookUrl = getReceivingWebhookUrl();
   
   if (!receivingWebhookUrl) {
-    console.log('Receiving webhook URL not configured');
+    console.log('Receiving webhook URL not configured, skipping setup');
     return;
   }
   
-  // Configurar um EventSource para receber mensagens de um servidor de eventos
-  // Esta é uma abordagem alternativa caso o polling não seja ideal
-  const setupEventSource = () => {
-    try {
-      const eventSource = new EventSource(receivingWebhookUrl);
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+  console.log('Setting up message receiver for URL:', receivingWebhookUrl);
+  
+  // Usando polling ao invés de EventSource para maior compatibilidade
+  const startPolling = () => {
+    const pollInterval = setInterval(() => {
+      fetch(receivingWebhookUrl)
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error('Polling request failed');
+        })
+        .then(data => {
           if (data && data.message) {
             onMessageReceived(data.message);
           }
-        } catch (error) {
-          console.error('Error parsing message:', error);
-        }
-      };
-      
-      eventSource.onerror = (error) => {
-        console.error('EventSource failed:', error);
-        eventSource.close();
-        // Reconnect after a delay
-        setTimeout(setupEventSource, 5000);
-      };
-      
-      return eventSource;
-    } catch (error) {
-      console.error('Error setting up EventSource:', error);
-      return null;
-    }
+        })
+        .catch(err => {
+          // Silently ignore polling errors to avoid console spam
+          // console.error('Polling error:', err);
+        });
+    }, 5000); // Poll every 5 seconds
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      clearInterval(pollInterval);
+    });
+    
+    return pollInterval;
   };
   
-  // Use o EventSource para receber mensagens em tempo real
-  const eventSource = setupEventSource();
-  
-  // Limpar recursos quando a janela for fechada
-  window.addEventListener('beforeunload', () => {
-    if (eventSource) {
-      eventSource.close();
-    }
-  });
+  // Start polling
+  startPolling();
 };

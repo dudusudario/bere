@@ -39,11 +39,21 @@ export const useChatMessages = () => {
     }
     
     if (userPhone) {
-      setupMessageReceiver(async (receivedMessage) => {
-        // Add the received message to the chat
-        await addMessage(receivedMessage, 'ai', undefined, userPhone);
-      });
+      try {
+        setupMessageReceiver(async (receivedMessage) => {
+          // Add the received message to the chat
+          await addMessage(receivedMessage, 'ai', undefined, userPhone);
+        });
+      } catch (error) {
+        console.error('Failed to setup message receiver:', error);
+        // Don't show toast here as it might be too distracting
+        // The setup will retry on next component mount
+      }
     }
+    
+    return () => {
+      // Cleanup logic if needed
+    };
   }, []);
 
   // Delete message

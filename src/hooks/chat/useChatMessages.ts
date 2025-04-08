@@ -11,12 +11,14 @@ import {
   deleteMessageFromDb 
 } from './storage/database';
 import {
-  keepWebhookAlive,
-  setupMessageReceiver,
+  WEBHOOK_URL,
   getReceivingWebhookUrl,
-  generateReceivingWebhookUrl,
-  WEBHOOK_URL
+  generateReceivingWebhookUrl
 } from './webhook/urls';
+import {
+  keepWebhookAlive,
+  setupMessageReceiver
+} from './webhook/receiver';
 
 export const useChatMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);

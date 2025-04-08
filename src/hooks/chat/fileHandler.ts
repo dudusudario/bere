@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { FilePreview } from './types';
-import { generateId } from './utils';
+import { generateId } from './message/utils';
 
 export const useFileHandler = () => {
   const [selectedFiles, setSelectedFiles] = useState<FilePreview[]>([]);

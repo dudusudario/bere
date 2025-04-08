@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -161,13 +160,11 @@ export const useChat = () => {
   }, [scrollToBottom]);
 
   const toggleFavorite = useCallback(async (messageId: string) => {
-    // Find the message to toggle
     const message = messages.find(msg => msg.id === messageId);
     if (!message) return;
     
     const newFavoriteStatus = !message.isFavorite;
     
-    // Update state
     setMessages(prev => 
       prev.map(msg => 
         msg.id === messageId 
@@ -176,7 +173,6 @@ export const useChat = () => {
       )
     );
     
-    // Update in Supabase
     try {
       const { error } = await supabase
         .from('message_history')
@@ -251,23 +247,20 @@ export const useChat = () => {
 
   const parseResponse = (responseText: string) => {
     try {
-      // Tenta analisar a resposta como JSON
       const jsonResponse = JSON.parse(responseText);
       
-      // Se for um array com objetos que têm uma propriedade 'message'
-      if (Array.isArray(jsonResponse) && jsonResponse.length > 0 && jsonResponse[0].message) {
-        return jsonResponse[0].message;
+      if (Array.isArray(jsonResponse) && jsonResponse.length > 0) {
+        if (jsonResponse[0].message) {
+          return jsonResponse.map(item => item.message).join('\n\n');
+        }
       }
       
-      // Se for um objeto com uma propriedade 'message'
       if (jsonResponse.message) {
         return jsonResponse.message;
       }
       
-      // Retorna o JSON formatado se não conseguir extrair a mensagem
       return JSON.stringify(jsonResponse, null, 2);
     } catch (e) {
-      // Se não for um JSON válido, retorna o texto original
       return responseText;
     }
   };
@@ -275,14 +268,12 @@ export const useChat = () => {
   const sendMessage = useCallback(async (content: string, phoneNumber: string) => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
-    // Add user message
     await addMessage(content, 'user', selectedFiles.map(f => f.file), phoneNumber);
     
     setIsLoading(true);
     
     try {
       const formData = new FormData();
-      // Enviar telefone e mensagem separadamente
       formData.append('telefone', phoneNumber);
       formData.append('mensagem', content);
       

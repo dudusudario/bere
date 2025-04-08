@@ -2,16 +2,29 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, User, Settings } from 'lucide-react';
 import ChatInterface from '@/components/ChatInterface';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
-  const userPhone = localStorage.getItem('userPhone');
+  const { user, profile, signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem('userPhone');
+  const handleLogout = async () => {
+    await signOut();
     navigate('/login');
+  };
+
+  // Get user initials for avatar fallback
+  const getInitials = () => {
+    if (!profile?.full_name) return "U";
+    return profile.full_name
+      .split(' ')
+      .map(name => name[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
 
   return (
@@ -23,12 +36,21 @@ const Index: React.FC = () => {
             <p className="text-sm text-muted-foreground">Sua assistente pessoal personalizada</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-sm text-muted-foreground hidden sm:block">
-              Telefone: {userPhone}
+            <div onClick={() => navigate('/profile')} className="cursor-pointer flex items-center gap-2">
+              <Avatar>
+                <AvatarImage src={profile?.profile_image || ''} alt={profile?.full_name || 'Usuário'} />
+                <AvatarFallback>{getInitials()}</AvatarFallback>
+              </Avatar>
+              <div className="hidden md:block text-sm">
+                <p className="font-medium">{profile?.full_name || user?.user_metadata?.full_name || 'Usuário'}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
+            <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} title="Configurações">
+              <Settings className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>

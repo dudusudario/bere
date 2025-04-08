@@ -9,6 +9,9 @@ import Login from "./pages/Login";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProfileSetup from "./pages/ProfileSetup";
+import UserProfile from "./pages/UserProfile";
+import EmailConfirmation from "./pages/EmailConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +24,23 @@ const App = () => (
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/email-confirmation" element={<EmailConfirmation />} />
+          <Route 
+            path="/profile-setup" 
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/chat" 
             element={

@@ -1211,6 +1211,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          address: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          email_confirmed: boolean | null
+          full_name: string | null
+          id: string
+          profile_image: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email_confirmed?: boolean | null
+          full_name?: string | null
+          id: string
+          profile_image?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email_confirmed?: boolean | null
+          full_name?: string | null
+          id?: string
+          profile_image?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           created_at: string

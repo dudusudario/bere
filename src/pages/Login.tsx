@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { LogIn, Phone } from 'lucide-react';
+import { LogIn, Phone, ArrowLeft } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -50,7 +50,7 @@ const Login: React.FC = () => {
         description: "Bem-vindo à Berenice!",
       });
       
-      navigate('/');
+      navigate('/chat');
       setIsLoading(false);
     }, 1000);
   };
@@ -70,7 +70,7 @@ const Login: React.FC = () => {
         description: "Bem-vindo à Berenice!",
       });
       
-      navigate('/');
+      navigate('/chat');
       setIsLoading(false);
     }, 1000);
     
@@ -82,7 +82,18 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight">Berenice</CardTitle>
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar
+            </Button>
+            <div></div>
+          </div>
+          <CardTitle className="text-2xl font-bold tracking-tight mt-4">Berenice</CardTitle>
           <CardDescription>
             Sua assistente pessoal personalizada
           </CardDescription>

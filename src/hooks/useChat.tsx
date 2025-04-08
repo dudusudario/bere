@@ -118,7 +118,7 @@ export const useChat = () => {
     setSelectedFiles([]);
   }, []);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, phoneNumber: string) => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
     // Add user message
@@ -128,7 +128,9 @@ export const useChat = () => {
     
     try {
       const formData = new FormData();
-      formData.append('message', content);
+      // Enviar telefone e mensagem separadamente
+      formData.append('telefone', phoneNumber);
+      formData.append('mensagem', content);
       
       selectedFiles.forEach(filePreview => {
         formData.append('file', filePreview.file);

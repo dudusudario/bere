@@ -24,9 +24,8 @@ const ChatInterface: React.FC = () => {
 
   // Função para enviar mensagem com o número de telefone
   const handleSendMessage = async (content: string) => {
-    // Adicionar o número de telefone ao conteúdo ou como metadado
-    // Você pode adaptar isso conforme a necessidade do seu backend
-    await sendMessage(`[Telefone: ${userPhone}] ${content}`);
+    // Enviamos o número de telefone e o conteúdo separadamente
+    await sendMessage(content, userPhone);
   };
 
   return (

@@ -2,14 +2,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Settings } from 'lucide-react';
+import { LogOut, User, Settings, Shield } from 'lucide-react';
 import ChatInterface from '@/components/ChatInterface';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isAdmin } = useAuth();
 
   const handleLogout = async () => {
     await signOut();
@@ -46,6 +46,11 @@ const Index: React.FC = () => {
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
             </div>
+            {isAdmin && (
+              <Button variant="ghost" size="icon" onClick={() => navigate('/admin')} title="Administração">
+                <Shield className="h-5 w-5 text-primary" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} title="Configurações">
               <Settings className="h-5 w-5" />
             </Button>

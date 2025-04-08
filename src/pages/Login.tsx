@@ -25,7 +25,7 @@ const Login: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Updated Google OAuth configuration
+      // Updated Google OAuth configuration with specific redirectTo
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

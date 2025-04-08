@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProfileSetup from "./pages/ProfileSetup";
 import UserProfile from "./pages/UserProfile";
 import EmailConfirmation from "./pages/EmailConfirmation";
+import AdminPanel from "./pages/AdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,15 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Nova rota de administração */}
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminPanel />
               </ProtectedRoute>
             } 
           />

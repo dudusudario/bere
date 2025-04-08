@@ -11,6 +11,7 @@ interface AuthContextProps {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  isAdmin: boolean;
 }
 
 export interface UserProfile {
@@ -22,6 +23,7 @@ export interface UserProfile {
   email_confirmed: boolean;
   created_at?: string;
   updated_at?: string;
+  is_admin?: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -31,15 +33,20 @@ const AuthContext = createContext<AuthContextProps>({
   loading: true,
   signOut: async () => {},
   refreshProfile: async () => {},
+  isAdmin: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
+
+// Lista de emails de administradores
+const ADMIN_EMAILS = ['seu-email@gmail.com']; // Adicione aqui o seu email de administrador
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const { toast } = useToast();
 
   const refreshProfile = async () => {
@@ -57,7 +64,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       // Cast the response to our UserProfile type
-      setProfile(data as unknown as UserProfile);
+      const userProfile = data as unknown as UserProfile;
+      setProfile(userProfile);
+      
+      // Verificar se o usuário é um administrador
+      if (user.email && ADMIN_EMAILS.includes(user.email)) {
+        setIsAdmin(true);
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
@@ -72,6 +85,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (event, session) => {
           setSession(session);
           setUser(session?.user ?? null);
+          
+          // Verificar se o usuário é um administrador
+          if (session?.user?.email && ADMIN_EMAILS.includes(session.user.email)) {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
           
           // Fetch user profile with setTimeout to avoid deadlock
           if (session?.user) {
@@ -101,6 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
+      // Verificar se o usuário é um administrador
+      if (session?.user?.email && ADMIN_EMAILS.includes(session.user.email)) {
+        setIsAdmin(true);
+      }
+      
       if (session?.user) {
         await refreshProfile();
       }
@@ -128,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     signOut,
     refreshProfile,
+    isAdmin,
   };
 
   return (

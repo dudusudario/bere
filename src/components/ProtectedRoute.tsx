@@ -6,13 +6,15 @@ import { useAuth } from '@/contexts/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireProfileComplete?: boolean;
+  adminOnly?: boolean;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requireProfileComplete = true
+  requireProfileComplete = true,
+  adminOnly = false
 }) => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, isAdmin } = useAuth();
   const location = useLocation();
 
   // Show loading state while checking authentication
@@ -27,6 +29,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // If not authenticated, redirect to login
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If admin only route and user is not admin, redirect to chat
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/chat" replace />;
   }
 
   // If profile is required but not complete, redirect to profile setup

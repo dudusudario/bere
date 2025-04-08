@@ -46,6 +46,8 @@ const Auth: React.FC = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth event:", event);
+        console.log("Session:", session);
         setSession(session);
         if (session) {
           navigate('/chat');
@@ -74,36 +76,53 @@ const Auth: React.FC = () => {
   });
 
   const onLoginSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      console.log("Attempting login with email:", values.email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
       if (error) {
+        console.error('Login error:', error);
+        let errorMessage = 'Ocorreu um erro. Tente novamente.';
+        
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Email não confirmado. Por favor, verifique sua caixa de entrada.';
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: 'Erro no login',
+          description: errorMessage,
+        });
         throw error;
       }
 
+      console.log("Login successful:", data);
       toast({
         title: 'Login bem-sucedido',
         description: 'Bem-vindo de volta!',
       });
+      
+      // Navegação é feita automaticamente pelo listener de autenticação
     } catch (error) {
       console.error('Login error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro no login',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
-      });
+      // Mensagem de erro já exibida no bloco de tratamento acima
     } finally {
       setIsLoading(false);
     }
   };
 
   const onRegisterSubmit = async (values: RegisterFormValues) => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      console.log("Attempting registration with email:", values.email);
+      
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -115,27 +134,43 @@ const Auth: React.FC = () => {
       });
 
       if (error) {
+        console.error('Registration error:', error);
+        let errorMessage = 'Ocorreu um erro. Tente novamente.';
+        
+        if (error.message.includes('User already registered')) {
+          errorMessage = 'Este email já está registrado. Tente fazer login.';
+          setActiveTab('login');
+        } else if (error.message.includes('password')) {
+          errorMessage = 'A senha não atende aos requisitos mínimos de segurança.';
+        } else if (error.message.includes('validation')) {
+          errorMessage = 'Formato de email inválido.';
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: 'Erro no registro',
+          description: errorMessage,
+        });
         throw error;
       }
 
-      toast({
-        title: 'Registro bem-sucedido',
-        description: data.user?.identities?.length === 0 
-          ? 'Você já tem uma conta. Tente fazer login.'
-          : 'Sua conta foi criada com sucesso!',
-      });
-
-      // Switch to login tab if user already exists
+      console.log("Registration response:", data);
+      
       if (data.user?.identities?.length === 0) {
+        toast({
+          title: 'Email já cadastrado',
+          description: 'Você já tem uma conta. Tente fazer login.',
+        });
         setActiveTab('login');
+      } else {
+        toast({
+          title: 'Registro bem-sucedido',
+          description: 'Sua conta foi criada! Verifique seu email para confirmar o cadastro.',
+        });
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro no registro',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
-      });
+      // Mensagem de erro já exibida no bloco de tratamento acima
     } finally {
       setIsLoading(false);
     }
@@ -143,23 +178,44 @@ const Auth: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      setIsLoading(true);
+      console.log("Iniciando processo de login com Google...");
+      
+      // Usar a URL atual para determinar o redirecionamento
+      const redirectTo = new URL('/chat', window.location.origin).toString();
+      console.log("URL de redirecionamento:", redirectTo);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/chat'
+          redirectTo: redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       
       if (error) {
+        console.error('Google login error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro no login com Google',
+          description: error.message || 'Ocorreu um erro. Tente novamente.',
+        });
         throw error;
       }
+      
+      console.log("Google login initiated:", data);
     } catch (error) {
       console.error('Google login error:', error);
       toast({
         variant: 'destructive',
         title: 'Erro no login com Google',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
+        description: 'Ocorreu um erro ao conectar com o Google. Verifique sua conexão ou tente novamente mais tarde.',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -196,7 +252,7 @@ const Auth: React.FC = () => {
                 <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
                   <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
                 </svg>
-                Continuar com Google
+                {isLoading ? 'Conectando...' : 'Continuar com Google'}
               </Button>
             </div>
 

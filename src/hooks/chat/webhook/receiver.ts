@@ -12,28 +12,7 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
   
   console.log('Setting up message receiver for URL:', receivingWebhookUrl);
   
-  // Create a simple server-sent events listener
-  try {
-    // Register an endpoint handler in the service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(registration => {
-        console.log('Service worker ready, setting up message handler');
-        
-        // We'll use a simple polling mechanism instead since service workers
-        // might not be fully supported in all environments
-        startPolling();
-      });
-    } else {
-      // Fallback to polling if service worker is not available
-      startPolling();
-    }
-  } catch (err) {
-    console.error('Error setting up message receiver:', err);
-    // Fallback to polling
-    startPolling();
-  }
-  
-  // Usando polling ao invés de EventSource para maior compatibilidade
+  // Define startPolling function before using it
   const startPolling = () => {
     // Add a message handler for incoming webhook messages
     window.addEventListener('message', (event) => {
@@ -82,6 +61,27 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
     
     return pollInterval;
   };
+  
+  // Create a simple server-sent events listener
+  try {
+    // Register an endpoint handler in the service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        console.log('Service worker ready, setting up message handler');
+        
+        // We'll use a simple polling mechanism instead since service workers
+        // might not be fully supported in all environments
+        startPolling();
+      });
+    } else {
+      // Fallback to polling if service worker is not available
+      startPolling();
+    }
+  } catch (err) {
+    console.error('Error setting up message receiver:', err);
+    // Fallback to polling
+    startPolling();
+  }
 };
 
 // Função para manter o webhook ativo

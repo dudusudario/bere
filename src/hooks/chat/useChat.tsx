@@ -1,15 +1,16 @@
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Message } from './types';
 import { useMessageHistory } from './messageHistory';
 import { useFileHandler } from './fileHandler';
-import { WEBHOOK_URL, generateId, parseResponse, saveMessage, saveFavoriteStatus, deleteMessageFromDb } from './utils';
+import { WEBHOOK_URL, generateId, parseResponse, saveMessage, saveFavoriteStatus, deleteMessageFromDb, keepWebhookAlive } from './utils';
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const webhookTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
@@ -20,6 +21,11 @@ export const useChat = () => {
   // Import sub-hooks with their functionality
   const { selectedFiles, handleFileChange, removeFile, clearFiles } = useFileHandler();
   const { isLoadingHistory, loadMessageHistory: loadHistory } = useMessageHistory(scrollToBottom);
+
+  // Start the webhook heartbeat when the component mounts
+  useEffect(() => {
+    keepWebhookAlive();
+  }, []);
 
   // Load message history wrapper
   const loadMessageHistory = useCallback(async (userPhone: string) => {
@@ -96,7 +102,7 @@ export const useChat = () => {
     }
   }, [messages]);
 
-  // Send message to webhook
+  // Send message to webhook with improved stability
   const sendMessage = useCallback(async (content: string, phoneNumber: string) => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
@@ -104,7 +110,20 @@ export const useChat = () => {
     
     setIsLoading(true);
     
+    // Limpar qualquer timeout anterior
+    if (webhookTimeoutRef.current) {
+      clearTimeout(webhookTimeoutRef.current);
+    }
+    
     try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      
+      // Definir um timeout para a requisição
+      webhookTimeoutRef.current = setTimeout(() => {
+        controller.abort();
+      }, 30000); // 30 segundos de timeout
+      
       const formData = new FormData();
       formData.append('telefone', phoneNumber);
       formData.append('mensagem', content);
@@ -116,6 +135,11 @@ export const useChat = () => {
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         body: formData,
+        signal,
+        headers: {
+          'Connection': 'keep-alive',
+          'Keep-Alive': 'timeout=60, max=1000'
+        }
       });
       
       if (!response.ok) {
@@ -128,9 +152,20 @@ export const useChat = () => {
       await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
     } catch (error) {
       console.error('Error sending message:', error);
-      await addMessage("Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.", 'ai', undefined, phoneNumber);
-      toast.error("Erro ao enviar mensagem");
+      
+      if ((error as Error).name === 'AbortError') {
+        await addMessage("A solicitação demorou muito tempo. Por favor, tente novamente.", 'ai', undefined, phoneNumber);
+        toast.error("Tempo limite excedido na solicitação");
+      } else {
+        await addMessage("Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.", 'ai', undefined, phoneNumber);
+        toast.error("Erro ao enviar mensagem");
+      }
     } finally {
+      if (webhookTimeoutRef.current) {
+        clearTimeout(webhookTimeoutRef.current);
+        webhookTimeoutRef.current = null;
+      }
+      
       setIsLoading(false);
       clearFiles();
     }

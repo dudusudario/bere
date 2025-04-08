@@ -114,3 +114,24 @@ export const deleteMessageFromDb = async (messageId: string): Promise<boolean> =
     return false;
   }
 };
+
+// Função para manter o webhook ativo
+export const keepWebhookAlive = (): void => {
+  // Implementa um heartbeat para manter a conexão viva
+  const heartbeatInterval = setInterval(() => {
+    fetch(WEBHOOK_URL, {
+      method: 'HEAD',
+      headers: {
+        'Keep-Alive': 'timeout=60, max=100'
+      },
+    }).catch(err => {
+      console.log('Heartbeat falhou, reconectando webhook...');
+      // Tentar reconectar se o heartbeat falhar
+    });
+  }, 45000); // Envia heartbeat a cada 45 segundos
+  
+  // Limpar o intervalo quando a janela for fechada
+  window.addEventListener('beforeunload', () => {
+    clearInterval(heartbeatInterval);
+  });
+};

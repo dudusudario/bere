@@ -12,13 +12,18 @@ const Login: React.FC = () => {
     // Check if user is already authenticated
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
+        console.log("User already authenticated, redirecting to chat");
         navigate('/chat');
       }
+    }).catch(error => {
+      console.error("Error checking session:", error);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change event:", event);
       if (session) {
+        console.log("User session detected, redirecting to chat");
         navigate('/chat');
       }
     });
@@ -28,6 +33,7 @@ const Login: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      console.log("Starting Google login process...");
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -41,8 +47,15 @@ const Login: React.FC = () => {
       
       if (error) {
         console.error('Google login error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro no login com Google',
+          description: error.message || 'Ocorreu um erro. Tente novamente.',
+        });
         throw error;
       }
+      
+      console.log("Google login initiated successfully:", data);
     } catch (error) {
       console.error('Google login error:', error);
       toast({

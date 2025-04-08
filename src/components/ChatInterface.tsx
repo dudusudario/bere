@@ -30,8 +30,8 @@ const ChatInterface: React.FC = () => {
           <ChatMessage
             key={message.id}
             message={message}
-            onToggleFavorite={() => toggleFavorite(message.id)}
-            onCopyToClipboard={() => copyMessageToClipboard(message.id)}
+            onToggleFavorite={toggleFavorite}
+            onCopyToClipboard={copyMessageToClipboard}
           />
         ))}
         {isLoading && <TypingIndicator />}

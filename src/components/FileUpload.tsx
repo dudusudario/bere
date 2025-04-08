@@ -6,14 +6,16 @@ import { Button } from '@/components/ui/button';
 
 interface FileUploadProps {
   selectedFiles: FilePreview[];
-  handleFileChange: (files: FileList | null) => void;
-  removeFile: (fileId: string) => void;
+  onFileChange: (files: FileList | null) => void;
+  onRemove: (fileId: string) => void;
+  onClear: () => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
   selectedFiles,
-  handleFileChange,
-  removeFile
+  onFileChange,
+  onRemove,
+  onClear
 }) => {
   return (
     <div>
@@ -30,7 +32,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           type="file"
           multiple
           className="file-input"
-          onChange={(e) => handleFileChange(e.target.files)}
+          onChange={(e) => onFileChange(e.target.files)}
           accept="image/*, video/*, application/pdf"
         />
       </div>
@@ -58,7 +60,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 </div>
               )}
               <button 
-                onClick={() => removeFile(file.id)}
+                onClick={() => onRemove(file.id)}
                 className="absolute -top-2 -right-2 bg-foreground text-primary-foreground rounded-full p-0.5"
               >
                 <X size={14} />

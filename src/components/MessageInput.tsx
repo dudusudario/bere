@@ -2,30 +2,22 @@
 import React, { useState, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import FileUpload from './FileUpload';
-import { FilePreview } from '@/hooks/useChat';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
-  selectedFiles: FilePreview[];
-  handleFileChange: (files: FileList | null) => void;
-  removeFile: (fileId: string) => void;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
-  isLoading,
-  selectedFiles,
-  handleFileChange,
-  removeFile
+  isLoading
 }) => {
   const [message, setMessage] = useState('');
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() || selectedFiles.length > 0) {
+    if (message.trim()) {
       onSendMessage(message);
       setMessage('');
       if (textAreaRef.current) {
@@ -54,15 +46,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t bg-background sticky bottom-0 p-4 shadow-lg"
+      className="mt-2"
     >
-      <FileUpload 
-        selectedFiles={selectedFiles}
-        handleFileChange={handleFileChange}
-        removeFile={removeFile}
-      />
-      
-      <div className="flex items-end space-x-2 mt-2">
+      <div className="flex items-end space-x-2">
         <div className="flex-1 relative">
           <textarea
             ref={textAreaRef}
@@ -77,7 +63,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         </div>
         <Button 
           type="submit" 
-          disabled={isLoading && !selectedFiles.length && !message.trim()}
+          disabled={isLoading && !message.trim()}
           className="rounded-full aspect-square"
         >
           <Send size={18} />

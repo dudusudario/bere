@@ -7,15 +7,15 @@ import { cn } from '@/lib/utils';
 
 interface ChatMessageProps {
   message: Message;
-  toggleFavorite: (messageId: string) => void;
-  copyMessage: (messageId: string) => void;
+  onToggleFavorite: (messageId: string) => void;
+  onCopyToClipboard: (messageId: string) => void;
   showTypingAnimation?: boolean;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
-  toggleFavorite,
-  copyMessage,
+  onToggleFavorite,
+  onCopyToClipboard,
   showTypingAnimation = false
 }) => {
   const [displayText, setDisplayText] = useState<string>('');
@@ -98,7 +98,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       {message.sender === 'ai' && isComplete && (
         <div className="flex space-x-2">
           <Button 
-            onClick={() => toggleFavorite(message.id)} 
+            onClick={() => onToggleFavorite(message.id)} 
             variant="ghost" 
             size="icon" 
             className={cn(
@@ -109,7 +109,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             <Heart size={16} fill={message.isFavorite ? "currentColor" : "none"} />
           </Button>
           <Button 
-            onClick={() => copyMessage(message.id)} 
+            onClick={() => onCopyToClipboard(message.id)} 
             variant="ghost" 
             size="icon" 
             className="h-8 w-8 rounded-full text-muted-foreground"

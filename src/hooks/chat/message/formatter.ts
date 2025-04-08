@@ -3,6 +3,12 @@
 
 export const parseResponse = (responseText: string): string => {
   try {
+    // Checking if response is already a clean string without JSON structure
+    if (typeof responseText === 'string' && !responseText.startsWith('{') && !responseText.startsWith('[')) {
+      // If it's already a clean string, return it directly
+      return responseText.trim();
+    }
+    
     // Tenta parsear como JSON
     const jsonResponse = JSON.parse(responseText);
     
@@ -16,11 +22,26 @@ export const parseResponse = (responseText: string): string => {
           .filter(msg => msg) // Filter out any undefined/null/empty messages
           .join('\n\n');
       }
+      
+      // If it's an array of strings
+      if (typeof jsonResponse[0] === 'string') {
+        return jsonResponse.join('\n\n');
+      }
     }
     
     // Handle single message object
     if (jsonResponse.message) {
       return jsonResponse.message;
+    }
+    
+    // Check for 'content' field which is common in API responses
+    if (jsonResponse.content) {
+      return jsonResponse.content;
+    }
+    
+    // Check for 'text' field which is also common
+    if (jsonResponse.text) {
+      return jsonResponse.text;
     }
     
     // Se o JSON não tem o formato esperado mas parece ser uma string,
@@ -41,8 +62,9 @@ export const parseResponse = (responseText: string): string => {
       return jsonResponse;
     }
     
-    // Em último caso, retorna o texto original
-    return responseText;
+    // If it's a complex object and we couldn't extract a message,
+    // convert it to a formatted string for display
+    return JSON.stringify(jsonResponse, null, 2);
   } catch (e) {
     // Se não for JSON, retorna o texto original sem alterações
     return responseText;

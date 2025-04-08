@@ -42,6 +42,8 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
         formData.append('file', filePreview.file);
       });
       
+      console.log(`Enviando mensagem para webhook ${WEBHOOK_URL}`);
+      
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         body: formData,
@@ -56,8 +58,13 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
         throw new Error(`Erro na requisição: ${response.status}`);
       }
       
+      // First try to get response as text
       const responseText = await response.text();
+      console.log('Resposta recebida:', responseText);
+      
+      // Parse the response to extract clean message text
       const parsedMessage = parseResponse(responseText);
+      console.log('Mensagem parseada:', parsedMessage);
       
       await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
     } catch (error) {

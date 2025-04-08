@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,13 +51,12 @@ const WebhookConfig: React.FC = () => {
     try {
       // Tenta enviar uma mensagem de teste para a URL configurada
       const response = await fetch(receivingWebhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          type: 'test',
-          message: 'Este é um teste do webhook de recebimento',
+          message: "Este é um teste do webhook de recebimento",
           timestamp: new Date().toISOString()
         })
       });
@@ -101,7 +99,7 @@ const WebhookConfig: React.FC = () => {
             />
             <p className="text-sm text-muted-foreground">
               Este é o endereço configurado para enviar mensagens para o agente N8N. 
-              Esta configuração é definida no código.
+              Esta configura��ão é definida no código.
             </p>
           </div>
           

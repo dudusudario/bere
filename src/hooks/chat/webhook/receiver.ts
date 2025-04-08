@@ -12,24 +12,66 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
   
   console.log('Setting up message receiver for URL:', receivingWebhookUrl);
   
+  // Create a simple server-sent events listener
+  try {
+    // Register an endpoint handler in the service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        console.log('Service worker ready, setting up message handler');
+        
+        // We'll use a simple polling mechanism instead since service workers
+        // might not be fully supported in all environments
+        startPolling();
+      });
+    } else {
+      // Fallback to polling if service worker is not available
+      startPolling();
+    }
+  } catch (err) {
+    console.error('Error setting up message receiver:', err);
+    // Fallback to polling
+    startPolling();
+  }
+  
   // Usando polling ao invés de EventSource para maior compatibilidade
   const startPolling = () => {
+    // Add a message handler for incoming webhook messages
+    window.addEventListener('message', (event) => {
+      // Handle messages sent to the window
+      if (event.data && event.data.type === 'webhook_message') {
+        console.log('Received webhook message:', event.data.message);
+        onMessageReceived(event.data.message);
+      }
+    });
+    
     const pollInterval = setInterval(() => {
+      // Use the fetch API to poll the webhook endpoint
       fetch(receivingWebhookUrl)
         .then(response => {
-          if (response.ok) {
-            return response.json();
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-          throw new Error('Polling request failed');
+          return response.text();
         })
         .then(data => {
-          if (data && data.message) {
-            onMessageReceived(data.message);
+          try {
+            // Try to parse as JSON first
+            const jsonData = JSON.parse(data);
+            if (jsonData && jsonData.message) {
+              console.log('Received webhook message via polling:', jsonData.message);
+              onMessageReceived(jsonData.message);
+            }
+          } catch (e) {
+            // If it's not valid JSON, check if it's a raw message
+            if (data && typeof data === 'string' && data.trim()) {
+              console.log('Received raw webhook message:', data);
+              onMessageReceived(data);
+            }
           }
         })
-        .catch(err => {
-          // Silently ignore polling errors to avoid console spam
-          // console.error('Polling error:', err);
+        .catch(error => {
+          // Log the error but don't spam the console
+          console.debug('Polling error (this is normal if the endpoint is not yet available):', error);
         });
     }, 5000); // Poll every 5 seconds
     
@@ -40,9 +82,6 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
     
     return pollInterval;
   };
-  
-  // Start polling
-  startPolling();
 };
 
 // Função para manter o webhook ativo

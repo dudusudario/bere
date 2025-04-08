@@ -7,6 +7,8 @@ import TypingIndicator from './TypingIndicator';
 import { useChat, type Message, type FilePreview } from '../hooks/useChat';
 
 const ChatInterface: React.FC = () => {
+  const userPhone = localStorage.getItem('userPhone') || '';
+  
   const {
     messages,
     isLoading,
@@ -20,6 +22,13 @@ const ChatInterface: React.FC = () => {
     copyMessageToClipboard
   } = useChat();
 
+  // Função para enviar mensagem com o número de telefone
+  const handleSendMessage = async (content: string) => {
+    // Adicionar o número de telefone ao conteúdo ou como metadado
+    // Você pode adaptar isso conforme a necessidade do seu backend
+    await sendMessage(`[Telefone: ${userPhone}] ${content}`);
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
       <div
@@ -30,8 +39,8 @@ const ChatInterface: React.FC = () => {
           <ChatMessage
             key={message.id}
             message={message}
-            onToggleFavorite={toggleFavorite}
-            onCopyToClipboard={copyMessageToClipboard}
+            onToggleFavorite={() => toggleFavorite(message.id)}
+            onCopyToClipboard={() => copyMessageToClipboard(message.id)}
           />
         ))}
         {isLoading && <TypingIndicator />}
@@ -45,7 +54,7 @@ const ChatInterface: React.FC = () => {
           onClear={clearFiles}
         />
         <MessageInput
-          onSendMessage={sendMessage}
+          onSendMessage={handleSendMessage}
           isLoading={isLoading}
         />
       </div>

@@ -5,9 +5,19 @@ import { toast } from 'sonner';
 
 export const WEBHOOK_URL = 'https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-a5a3-33053921db0e';
 
-// Get the receiving webhook URL from localStorage or use a default empty string
+// Gera automaticamente a URL para receber mensagens
+export const generateReceivingWebhookUrl = (): string => {
+  // Obtém a URL base da aplicação
+  const baseUrl = window.location.origin;
+  
+  // Forma a URL completa para o endpoint de webhook na mesma aplicação
+  return `${baseUrl}/api/webhook/receive-messages`;
+};
+
+// Get the receiving webhook URL from localStorage or generate a default one
 export const getReceivingWebhookUrl = (): string => {
-  return localStorage.getItem('receivingWebhookUrl') || '';
+  const savedUrl = localStorage.getItem('receivingWebhookUrl');
+  return savedUrl || generateReceivingWebhookUrl();
 };
 
 // Save the receiving webhook URL to localStorage

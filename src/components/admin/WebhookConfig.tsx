@@ -5,17 +5,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from 'sonner';
-import { Settings, RefreshCw } from 'lucide-react';
-import { getReceivingWebhookUrl, saveReceivingWebhookUrl, WEBHOOK_URL } from '@/hooks/chat/utils';
+import { Settings, RefreshCw, Copy, Check } from 'lucide-react';
+import { getReceivingWebhookUrl, saveReceivingWebhookUrl, generateReceivingWebhookUrl, WEBHOOK_URL } from '@/hooks/chat/utils';
 
 const WebhookConfig: React.FC = () => {
   const [sendingWebhookUrl, setSendingWebhookUrl] = useState(WEBHOOK_URL);
   const [receivingWebhookUrl, setReceivingWebhookUrl] = useState(getReceivingWebhookUrl());
   const [testingStatus, setTestingStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [copied, setCopied] = useState(false);
 
   const handleSaveReceivingWebhook = () => {
     saveReceivingWebhookUrl(receivingWebhookUrl);
     toast.success("URL de recebimento de mensagens salva com sucesso");
+  };
+
+  const generateNewReceivingUrl = () => {
+    const newUrl = generateReceivingWebhookUrl();
+    setReceivingWebhookUrl(newUrl);
+    saveReceivingWebhookUrl(newUrl);
+    toast.success("Nova URL gerada automaticamente");
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(receivingWebhookUrl);
+    setCopied(true);
+    toast.success("URL copiada para a área de transferência");
+    
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   const testReceivingWebhook = async () => {
@@ -84,16 +102,36 @@ const WebhookConfig: React.FC = () => {
           
           <div className="space-y-2">
             <Label htmlFor="receivingWebhookUrl">URL para Receber Mensagens</Label>
-            <Input
-              id="receivingWebhookUrl"
-              value={receivingWebhookUrl}
-              onChange={(e) => setReceivingWebhookUrl(e.target.value)}
-              placeholder="https://seu-servidor/api/webhook"
-              className="font-mono text-sm"
-            />
+            <div className="flex space-x-2">
+              <div className="relative flex-1">
+                <Input
+                  id="receivingWebhookUrl"
+                  value={receivingWebhookUrl}
+                  onChange={(e) => setReceivingWebhookUrl(e.target.value)}
+                  placeholder="https://seu-servidor/api/webhook"
+                  className="font-mono text-sm pr-10"
+                />
+                <Button 
+                  type="button"
+                  variant="ghost" 
+                  size="icon"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={copyToClipboard}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                onClick={generateNewReceivingUrl}
+              >
+                Gerar URL
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground">
               Configure o endereço HTTP POST que enviará mensagens para este chat.
               O sistema escutará este endpoint para receber mensagens do agente.
+              Você pode usar a URL gerada automaticamente ou personalizar conforme necessário.
             </p>
           </div>
         </CardContent>
@@ -140,7 +178,7 @@ const WebhookConfig: React.FC = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-1">Recebimento de Mensagens (a ser configurado)</h3>
+              <h3 className="font-semibold mb-1">Recebimento de Mensagens</h3>
               <p className="text-sm text-muted-foreground">
                 Para receber mensagens, você precisa configurar seu servidor para enviar requisições POST 
                 para a URL configurada acima. A mensagem deve estar no formato:
@@ -152,6 +190,10 @@ const WebhookConfig: React.FC = () => {
   "timestamp": "2023-04-08T14:30:00Z"
 }`}
               </pre>
+              <p className="text-sm text-muted-foreground mt-2">
+                A URL gerada automaticamente pode ser usada em ambientes de desenvolvimento. 
+                Para produção, configure com a URL onde sua aplicação estará hospedada.
+              </p>
             </div>
           </div>
         </CardContent>

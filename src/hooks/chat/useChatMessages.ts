@@ -8,7 +8,9 @@ import {
   saveFavoriteStatus, 
   deleteMessageFromDb, 
   keepWebhookAlive,
-  setupMessageReceiver
+  setupMessageReceiver,
+  getReceivingWebhookUrl,
+  generateReceivingWebhookUrl
 } from './utils';
 
 export const useChatMessages = () => {
@@ -28,6 +30,13 @@ export const useChatMessages = () => {
     
     // Setup message receiver from HTTP endpoint
     const userPhone = localStorage.getItem('userPhone') || '';
+    
+    // Ensure we have a receiving webhook URL
+    let webhookUrl = getReceivingWebhookUrl();
+    if (!webhookUrl) {
+      webhookUrl = generateReceivingWebhookUrl();
+      localStorage.setItem('receivingWebhookUrl', webhookUrl);
+    }
     
     if (userPhone) {
       setupMessageReceiver(async (receivedMessage) => {

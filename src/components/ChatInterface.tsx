@@ -1,9 +1,10 @@
 
-import React, { useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ChatMessage from './ChatMessage';
 import MessageInput from './MessageInput';
+import FileUpload from './FileUpload';
 import TypingIndicator from './TypingIndicator';
-import useChat from '@/hooks/useChat';
+import { useChat, type Message, type FilePreview } from '../hooks/useChat';
 
 const ChatInterface: React.FC = () => {
   const {
@@ -14,46 +15,40 @@ const ChatInterface: React.FC = () => {
     sendMessage,
     handleFileChange,
     removeFile,
+    clearFiles,
     toggleFavorite,
     copyMessageToClipboard
   } = useChat();
-  
-  useEffect(() => {
-    // Add welcome message if no messages exist
-    if (messages.length === 0) {
-      setTimeout(() => {
-        sendMessage("Olá! Sou sua assistente de carreira pessoal. Como posso ajudar com sua trajetória profissional hoje? Compartilhe suas metas, dúvidas ou desafios.");
-      }, 500);
-    }
-  }, []);
-  
+
   return (
-    <div className="chat-container">
-      <div 
+    <div className="flex flex-col h-[calc(100vh-140px)]">
+      <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col"
+        className="flex-1 overflow-y-auto p-4 space-y-4"
       >
-        {messages.map((message, index) => (
-          <ChatMessage 
+        {messages.map((message) => (
+          <ChatMessage
             key={message.id}
             message={message}
-            toggleFavorite={toggleFavorite}
-            copyMessage={copyMessageToClipboard}
-            // Only show typing animation for AI messages that are not the welcome message
-            showTypingAnimation={message.sender === 'ai' && index !== 0}
+            onToggleFavorite={() => toggleFavorite(message.id)}
+            onCopyToClipboard={() => copyMessageToClipboard(message.id)}
           />
         ))}
-        
         {isLoading && <TypingIndicator />}
       </div>
-      
-      <MessageInput 
-        onSendMessage={sendMessage}
-        isLoading={isLoading}
-        selectedFiles={selectedFiles}
-        handleFileChange={handleFileChange}
-        removeFile={removeFile}
-      />
+
+      <div className="border-t p-4 bg-background">
+        <FileUpload
+          selectedFiles={selectedFiles}
+          onFileChange={handleFileChange}
+          onRemove={removeFile}
+          onClear={clearFiles}
+        />
+        <MessageInput
+          onSendMessage={sendMessage}
+          isLoading={isLoading}
+        />
+      </div>
     </div>
   );
 };

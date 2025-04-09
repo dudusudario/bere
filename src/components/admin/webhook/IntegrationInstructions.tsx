@@ -20,7 +20,7 @@ const IntegrationInstructions: React.FC<IntegrationInstructionsProps> = ({ recei
         <h3 className="font-semibold mb-1">Recebimento de Mensagens (IMPORTANTE)</h3>
         <p className="text-sm text-muted-foreground">
           Para receber respostas do N8N, configure uma requisição HTTP POST
-          para a URL abaixo. A mensagem deve estar no formato:
+          para a URL simplificada abaixo. A mensagem deve estar no formato:
         </p>
         <pre className="bg-muted p-2 rounded my-2 text-xs overflow-x-auto">
 {`POST ${receivingWebhookUrl}

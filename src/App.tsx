@@ -61,6 +61,7 @@ function App() {
           <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/email-confirmation" element={<EmailConfirmation />} />
           <Route path="/api/webhook/receive" element={<WebhookReceiver />} />
+          <Route path="/api/webhook/berenice123" element={<WebhookReceiver />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

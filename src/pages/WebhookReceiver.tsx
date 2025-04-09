@@ -1,12 +1,11 @@
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // This component will handle webhook POST requests
-// In a real application, this would be a server-side endpoint
-// But for our frontend-only demo, we'll simulate receiving the request
 const WebhookReceiver: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Extract data from the URL query string or request body

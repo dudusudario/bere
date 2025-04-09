@@ -6,9 +6,8 @@ export const WEBHOOK_URL = 'https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-
 
 // Gera automaticamente a URL para receber mensagens
 export const generateReceivingWebhookUrl = (): string => {
-  // Para ambiente de desenvolvimento local, usamos um endpoint fixo
-  // que será tratado pelo nosso aplicativo React
-  return `${window.location.origin}/api/webhook/receive`;
+  // URL simplificada conforme pedido pelo usuário
+  return `${window.location.origin}/api/webhook/berenice123`;
 };
 
 // Get the receiving webhook URL from localStorage or generate a new one

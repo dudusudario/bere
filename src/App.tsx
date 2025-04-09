@@ -11,6 +11,8 @@ import UserProfile from "./pages/UserProfile";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
+import Auth from "./pages/Auth";
+import Login from "./pages/Login";
 
 function App() {
   const queryClient = new QueryClient();
@@ -46,6 +48,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/chat" element={
             <AppLayout>
               <Index />

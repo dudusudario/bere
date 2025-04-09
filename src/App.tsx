@@ -13,26 +13,20 @@ import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
+import { AuthProvider } from "./components/AuthProvider";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const queryClient = new QueryClient();
-  const [session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
+    const checkSession = async () => {
+      await supabase.auth.getSession();
       setIsLoading(false);
     };
-
-    fetchSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    
+    checkSession();
   }, []);
 
   if (isLoading) {
@@ -46,26 +40,36 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/chat" element={
-            <AppLayout>
-              <Index />
-            </AppLayout>
-          } />
-          <Route path="/profile" element={
-            <AppLayout>
-              <UserProfile />
-            </AppLayout>
-          } />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/profile-setup" element={<ProfileSetup />} />
-          <Route path="/email-confirmation" element={<EmailConfirmation />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/chat" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Index />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <UserProfile />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute adminOnly>
+                <AdminPanel />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile-setup" element={<ProfileSetup />} />
+            <Route path="/email-confirmation" element={<EmailConfirmation />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

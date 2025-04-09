@@ -18,15 +18,3 @@ export {
   saveFavoriteStatus, 
   deleteMessageFromDb 
 } from './storage/database';
-
-// Webhook utilities
-export { 
-  WEBHOOK_URL, 
-  getReceivingWebhookUrl, 
-  saveReceivingWebhookUrl, 
-  generateReceivingWebhookUrl 
-} from './webhook/urls';
-export { 
-  setupMessageReceiver, 
-  keepWebhookAlive 
-} from './webhook/receiver';

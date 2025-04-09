@@ -58,7 +58,11 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
       const parsedMessage = parseResponse(responseText);
       console.log('Mensagem parseada:', parsedMessage);
       
-      await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
+      // Only add the message to the chat if it's not empty
+      // The async response should come via webhook instead
+      if (parsedMessage && parsedMessage.trim()) {
+        await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       

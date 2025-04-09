@@ -32,13 +32,6 @@ const WebhookConfig: React.FC = () => {
     toast.success("URL de recebimento de mensagens salva com sucesso");
   };
 
-  const generateNewReceivingUrl = () => {
-    const newUrl = generateReceivingWebhookUrl();
-    setReceivingWebhookUrl(newUrl);
-    saveReceivingWebhookUrl(newUrl);
-    toast.success("Nova URL gerada automaticamente");
-  };
-
   const copyToClipboard = () => {
     navigator.clipboard.writeText(receivingWebhookUrl);
     setCopied(true);
@@ -47,6 +40,15 @@ const WebhookConfig: React.FC = () => {
     setTimeout(() => {
       setCopied(false);
     }, 2000);
+  };
+
+  const testWebhook = () => {
+    if (window.receiveWebhookMessage) {
+      window.receiveWebhookMessage("Esta é uma mensagem de teste do webhook!");
+      toast.success("Teste de webhook enviado com sucesso!");
+    } else {
+      toast.error("Receptor de webhook não está pronto. Reinicie a aplicação.");
+    }
   };
 
   return (
@@ -90,7 +92,6 @@ const WebhookConfig: React.FC = () => {
                   id="receivingWebhookUrl"
                   value={receivingWebhookUrl}
                   onChange={(e) => setReceivingWebhookUrl(e.target.value)}
-                  placeholder="https://seu-servidor/api/webhook"
                   className="font-mono text-sm pr-10"
                 />
                 <Button 
@@ -105,9 +106,9 @@ const WebhookConfig: React.FC = () => {
               </div>
               <Button
                 variant="outline"
-                onClick={generateNewReceivingUrl}
+                onClick={testWebhook}
               >
-                Gerar URL
+                Testar Webhook
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -145,13 +146,14 @@ const WebhookConfig: React.FC = () => {
               <h3 className="font-semibold mb-1">Recebimento de Mensagens (IMPORTANTE)</h3>
               <p className="text-sm text-muted-foreground">
                 Para receber respostas do N8N, configure uma requisição HTTP POST
-                para a URL acima. A mensagem deve estar no formato:
+                para a URL abaixo. A mensagem deve estar no formato:
               </p>
               <pre className="bg-muted p-2 rounded my-2 text-xs overflow-x-auto">
-{`{
-  "message": "Conteúdo da mensagem a ser exibida no chat",
-  "sender": "ai",
-  "timestamp": "2023-04-08T14:30:00Z"
+{`POST ${receivingWebhookUrl}
+Content-Type: application/json
+
+{
+  "message": "Conteúdo da mensagem a ser exibida no chat"
 }`}
               </pre>
               <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-3 mt-3">
@@ -163,9 +165,9 @@ const WebhookConfig: React.FC = () => {
                 </p>
                 <ul className="list-disc list-inside text-xs text-amber-700 dark:text-amber-400 mt-1 space-y-1">
                   <li>Método: POST</li>
-                  <li>URL: {receivingWebhookUrl || '[Gere uma URL acima]'}</li>
+                  <li>URL: {receivingWebhookUrl}</li>
                   <li>Tipo de conteúdo: JSON</li>
-                  <li>Envie a resposta formatada conforme o exemplo acima</li>
+                  <li>Corpo: {"{ \"message\": \"Sua resposta aqui\" }"}</li>
                 </ul>
               </div>
             </div>

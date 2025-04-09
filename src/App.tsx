@@ -11,6 +11,7 @@ import UserProfile from "./pages/UserProfile";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
+import WebhookReceiver from "./pages/WebhookReceiver";
 
 function App() {
   const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ function App() {
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/email-confirmation" element={<EmailConfirmation />} />
+          <Route path="/api/webhook/receive" element={<WebhookReceiver />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

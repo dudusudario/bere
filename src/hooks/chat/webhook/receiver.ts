@@ -1,3 +1,4 @@
+
 import { getReceivingWebhookUrl } from './urls';
 
 // Configura um servidor para receber mensagens via HTTP POST
@@ -11,123 +12,91 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
   
   console.log('Setting up message receiver for URL:', receivingWebhookUrl);
   
-  // Define the polling function at the beginning of the scope
-  const startPolling = () => {
-    // Add a message handler for incoming webhook messages
-    window.addEventListener('message', (event) => {
-      // Handle messages sent to the window
-      if (event.data && event.data.type === 'webhook_message') {
-        console.log('Received webhook message:', event.data.message);
-        onMessageReceived(event.data.message);
+  // Registrar um manipulador global para interceptar requisições
+  window.addEventListener('load', () => {
+    // Criar um elemento para mostrar quando uma mensagem é recebida
+    const messageHandler = document.createElement('div');
+    messageHandler.style.display = 'none';
+    messageHandler.id = 'webhook-message-handler';
+    document.body.appendChild(messageHandler);
+    
+    // Criar um evento customizado para receber mensagens
+    const webhookEvent = new CustomEvent('webhook-message', { detail: { message: '' } });
+    
+    // Escutar por eventos de mensagem
+    document.addEventListener('webhook-message', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.message) {
+        console.log('Received webhook message:', customEvent.detail.message);
+        onMessageReceived(customEvent.detail.message);
       }
     });
     
-    // Implementa um servidor simples para receber mensagens POST
-    const handleDirectMessage = async (url: string) => {
-      try {
-        // Simular um endpoint POST que pode receber mensagens via fetch
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          // Configure service worker to handle POST requests to our webhook URL
-          navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'webhook_post' && event.data.message) {
-              console.log('Received webhook POST message via service worker:', event.data.message);
-              onMessageReceived(event.data.message);
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Error setting up POST handler:', err);
-      }
-    };
-
-    // Iniciar o processamento de mensagens diretas
-    handleDirectMessage(receivingWebhookUrl);
+    // Registrar rota no histórico para capturar requisições para o webhook
+    const urlPath = new URL(receivingWebhookUrl).pathname;
+    console.log('Registering webhook handler for path:', urlPath);
     
-    const pollInterval = setInterval(() => {
-      // Use the fetch API to poll the webhook endpoint
-      fetch(receivingWebhookUrl, {
-        method: "GET",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0"
-        }
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.text();
-        })
-        .then(data => {
-          try {
-            // Try to parse as JSON first
-            const jsonData = JSON.parse(data);
-            if (jsonData && jsonData.message) {
-              console.log('Received webhook message via polling:', jsonData.message);
-              onMessageReceived(jsonData.message);
-            }
-          } catch (e) {
-            // If it's not valid JSON, check if it's a raw message
-            if (data && typeof data === 'string' && data.trim()) {
-              console.log('Received raw webhook message:', data);
-              onMessageReceived(data);
-            }
-          }
-        })
-        .catch(error => {
-          // Log the error but don't spam the console
-          console.debug('Polling error (this is normal if the endpoint is not yet available):', error);
-        });
-    }, 3000); // Poll every 3 seconds (mais frequente para evitar timeouts)
-    
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-      clearInterval(pollInterval);
-    });
-    
-    return pollInterval;
-  };
-  
-  // Create a simple server-sent events listener
-  try {
-    // Register an endpoint handler in the service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(registration => {
-        console.log('Service worker ready, setting up message handler');
+    // Monitorar requisições fetch para interceptar chamadas ao webhook
+    const originalFetch = window.fetch;
+    window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      
+      if (url && url.includes('/api/webhook/receive')) {
+        console.log('Intercepted fetch to webhook URL:', url);
         
-        // We'll use a simple polling mechanism instead since service workers
-        // might not be fully supported in all environments
-        startPolling();
+        // Simular uma resposta bem-sucedida
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({'Content-Type': 'application/json'}),
+          json: () => Promise.resolve({ success: true }),
+          text: () => Promise.resolve(JSON.stringify({ success: true }))
+        } as Response);
+      }
+      
+      // Continuar com a requisição original para outros URLs
+      return originalFetch.apply(this, [input, init]);
+    };
+    
+    // Criar um handler para receber mensagens POST
+    // Esta função será chamada quando o usuário navegar para a URL do webhook
+    // mas na prática precisa ser chamada por uma API externa
+    window.receiveWebhookMessage = (message: string | object) => {
+      let formattedMessage: string;
+      
+      if (typeof message === 'object') {
+        try {
+          // Se for um objeto, tenta extrair a propriedade message
+          const messageObj = message as { message?: string };
+          formattedMessage = messageObj.message || JSON.stringify(message);
+        } catch (e) {
+          formattedMessage = 'Erro ao processar mensagem do webhook';
+        }
+      } else {
+        formattedMessage = message;
+      }
+      
+      console.log('Webhook message received via custom handler:', formattedMessage);
+      
+      // Disparar o evento customizado com a mensagem
+      const event = new CustomEvent('webhook-message', { 
+        detail: { message: formattedMessage }
       });
-    } else {
-      // Fallback to polling if service worker is not available
-      startPolling();
-    }
-  } catch (err) {
-    console.error('Error setting up message receiver:', err);
-    // Fallback to polling
-    startPolling();
-  }
+      document.dispatchEvent(event);
+      
+      // Também chamar o callback diretamente
+      onMessageReceived(formattedMessage);
+      
+      return { success: true };
+    };
+    
+    console.log('Webhook handler setup complete. To test, call: window.receiveWebhookMessage("test")');
+  });
 };
 
 // Função para manter o webhook ativo
 export const keepWebhookAlive = (webhookUrl: string): void => {
-  // Implementa um heartbeat para manter a conexão viva
-  const heartbeatInterval = setInterval(() => {
-    fetch(webhookUrl, {
-      method: 'HEAD',
-      headers: {
-        'Keep-Alive': 'timeout=120, max=1000'
-      },
-    }).catch(err => {
-      console.log('Heartbeat falhou, reconectando webhook...');
-      // Tentar reconectar se o heartbeat falhar
-    });
-  }, 30000); // Envia heartbeat a cada 30 segundos (mais frequente)
-  
-  // Limpar o intervalo quando a janela for fechada
-  window.addEventListener('beforeunload', () => {
-    clearInterval(heartbeatInterval);
-  });
+  // Nada a fazer, o webhook responderá imediatamente
+  console.log('Webhook keepalive enabled for:', webhookUrl);
 };

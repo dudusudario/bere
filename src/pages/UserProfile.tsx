@@ -369,7 +369,7 @@ const UserProfile: React.FC = () => {
                       )}
                     />
 
-                    {/* Área de redefinição de senha */}
+                    {/* Área de redefinição de senha - movida para depois do CPF */}
                     <div className="pt-4">
                       <PasswordChangeSection />
                     </div>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,7 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft, Upload, Mail, Lock, User } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
+import PasswordChangeSection from '@/components/profile/PasswordChangeSection';
 
 const profileFormSchema = z.object({
   full_name: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
@@ -24,32 +26,51 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  
-  // Mock user and profile data since we removed auth
-  const user = { 
-    id: '1',
-    email: 'user@example.com' 
-  };
-  
   const [profile, setProfile] = useState({
-    full_name: 'Demo User',
-    address: 'Sample Address',
-    cpf_cnpj: '12345678901',
+    full_name: '',
+    address: '',
+    cpf_cnpj: '',
     profile_image: ''
   });
   
-  // Mock refresh profile function
-  const refreshProfile = async () => {
-    // This would fetch the latest profile data in a real app
-    console.log('Profile refreshed');
-  };
-  
-  // Mock sign out function
-  const signOut = async () => {
-    navigate('/');
-  };
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setProfile({
+            full_name: data.full_name || '',
+            address: data.address || '',
+            cpf_cnpj: data.cpf_cnpj || '',
+            profile_image: data.profile_image || ''
+          });
+        }
+      } catch (error: any) {
+        console.error('Erro ao buscar perfil:', error);
+        toast({
+          title: "Erro ao carregar perfil",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user, toast]);
   
   const defaultValues: Partial<ProfileFormValues> = {
     full_name: profile?.full_name || "",
@@ -74,25 +95,34 @@ const UserProfile: React.FC = () => {
   }, [profile, form]);
   
   const onSubmit = async (data: ProfileFormValues) => {
+    if (!user) return;
+    
     try {
       setIsLoading(true);
       
-      // Simulate saving profile data
-      setTimeout(() => {
-        setProfile({
-          ...profile,
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
           full_name: data.full_name,
           address: data.address,
-          cpf_cnpj: data.cpf_cnpj
-        });
-        
-        toast({
-          title: "Perfil atualizado",
-          description: "Seus dados foram salvos com sucesso.",
-        });
-        
-        setIsLoading(false);
-      }, 1000);
+          cpf_cnpj: data.cpf_cnpj,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      setProfile({
+        ...profile,
+        full_name: data.full_name,
+        address: data.address,
+        cpf_cnpj: data.cpf_cnpj
+      });
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Seus dados foram salvos com sucesso.",
+      });
       
     } catch (error: any) {
       toast({
@@ -100,13 +130,14 @@ const UserProfile: React.FC = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
   
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      if (!e.target.files || !e.target.files[0]) return;
+      if (!user || !e.target.files || !e.target.files[0]) return;
       const file = e.target.files[0];
       
       // Check if file is an image
@@ -121,23 +152,41 @@ const UserProfile: React.FC = () => {
       
       setUploadingImage(true);
       
-      // Simulate file upload
-      setTimeout(() => {
-        // Create a fake URL for demo purposes
-        const fakeUrl = URL.createObjectURL(file);
+      // Upload image to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `profile_images/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
         
-        setProfile({
-          ...profile,
-          profile_image: fakeUrl
-        });
+      if (uploadError) throw uploadError;
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
         
-        toast({
-          title: "Imagem atualizada",
-          description: "Sua foto de perfil foi atualizada com sucesso.",
-        });
+      const publicUrl = urlData.publicUrl;
+      
+      // Update profile with new image URL
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ profile_image: publicUrl })
+        .eq('id', user.id);
         
-        setUploadingImage(false);
-      }, 1500);
+      if (updateError) throw updateError;
+      
+      setProfile({
+        ...profile,
+        profile_image: publicUrl
+      });
+      
+      toast({
+        title: "Imagem atualizada",
+        description: "Sua foto de perfil foi atualizada com sucesso.",
+      });
       
     } catch (error: any) {
       toast({
@@ -145,17 +194,18 @@ const UserProfile: React.FC = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
       setUploadingImage(false);
     }
   };
   
   const handleSignOut = async () => {
-    navigate('/');
+    await signOut();
   };
   
   // Get user initials for avatar fallback
   const getInitials = () => {
-    if (!profile?.full_name) return "U";
+    if (!profile?.full_name) return user?.email?.charAt(0).toUpperCase() || "U";
     return profile.full_name
       .split(' ')
       .map(name => name[0])
@@ -185,101 +235,124 @@ const UserProfile: React.FC = () => {
       </header>
       
       <div className="container mx-auto px-4 py-8">
-        <Card className="w-full max-w-2xl mx-auto">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">Seu perfil</CardTitle>
-            <CardDescription>
-              Gerencie suas informações pessoais
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            {/* Profile Image */}
-            <div className="flex flex-col items-center space-y-4">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={profile?.profile_image || ''} alt={profile?.full_name || 'Usuário'} />
-                <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
-              </Avatar>
-              
-              <div className="relative">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center gap-2" 
-                  disabled={uploadingImage}
-                >
-                  <Upload className="h-4 w-4" />
-                  {uploadingImage ? "Enviando..." : "Mudar foto"}
-                  <input 
-                    type="file" 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                    onChange={handleImageUpload}
-                    accept="image/*"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Coluna 1: Perfil e Informações Básicas */}
+          <Card className="col-span-1 md:col-span-2">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold tracking-tight">Seu perfil</CardTitle>
+              <CardDescription>
+                Gerencie suas informações pessoais
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              {/* Profile Image */}
+              <div className="flex flex-col items-center space-y-4">
+                <Avatar className="w-24 h-24">
+                  <AvatarImage src={profile?.profile_image || ''} alt={profile?.full_name || 'Usuário'} />
+                  <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+                </Avatar>
+                
+                <div className="relative">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-2" 
                     disabled={uploadingImage}
-                  />
-                </Button>
-              </div>
-            </div>
-            
-            {/* Email display */}
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Email</p>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-            </div>
-            
-            <div className="border-t pt-4">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="full_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome completo</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Seu nome completo" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Endereço</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Seu endereço completo" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="cpf_cnpj"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CPF ou CNPJ</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Apenas números" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button type="submit" disabled={isLoading} className="w-full">
-                    {isLoading ? "Salvando..." : "Salvar alterações"}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {uploadingImage ? "Enviando..." : "Mudar foto"}
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                      onChange={handleImageUpload}
+                      accept="image/*"
+                      disabled={uploadingImage}
+                    />
                   </Button>
-                </form>
-              </Form>
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              </div>
+              
+              {/* Email display */}
+              <div className="space-y-1 border p-3 rounded-md bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium">Email</p>
+                </div>
+                <p className="text-sm text-muted-foreground pl-6">{user?.email}</p>
+              </div>
+              
+              <div className="border-t pt-4">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="full_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome completo</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input placeholder="Seu nome completo" className="pl-10" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Endereço</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Seu endereço completo" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="cpf_cnpj"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CPF ou CNPJ</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Apenas números" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button type="submit" disabled={isLoading} className="w-full">
+                      {isLoading ? "Salvando..." : "Salvar alterações"}
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Coluna 2: Segurança e Configurações */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Segurança</CardTitle>
+              <CardDescription>
+                Altere sua senha e configure opções de segurança
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <PasswordChangeSection />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

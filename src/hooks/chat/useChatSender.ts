@@ -29,10 +29,10 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
       const controller = new AbortController();
       const signal = controller.signal;
       
-      // Definir um timeout para a requisição
+      // Definir um timeout para a requisição com valor maior
       webhookTimeoutRef.current = setTimeout(() => {
         controller.abort();
-      }, 30000); // 30 segundos de timeout
+      }, 60000); // 60 segundos de timeout (aumentado de 30 para 60)
       
       const formData = new FormData();
       formData.append('telefone', phoneNumber);
@@ -50,7 +50,7 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
         signal,
         headers: {
           'Connection': 'keep-alive',
-          'Keep-Alive': 'timeout=60, max=1000'
+          'Keep-Alive': 'timeout=120, max=1000' // Aumentado o keep-alive
         }
       });
       

@@ -23,9 +23,37 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
       }
     });
     
+    // Implementa um servidor simples para receber mensagens POST
+    const handleDirectMessage = async (url: string) => {
+      try {
+        // Simular um endpoint POST que pode receber mensagens via fetch
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          // Configure service worker to handle POST requests to our webhook URL
+          navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'webhook_post' && event.data.message) {
+              console.log('Received webhook POST message via service worker:', event.data.message);
+              onMessageReceived(event.data.message);
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Error setting up POST handler:', err);
+      }
+    };
+
+    // Iniciar o processamento de mensagens diretas
+    handleDirectMessage(receivingWebhookUrl);
+    
     const pollInterval = setInterval(() => {
       // Use the fetch API to poll the webhook endpoint
-      fetch(receivingWebhookUrl)
+      fetch(receivingWebhookUrl, {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        }
+      })
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -52,7 +80,7 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
           // Log the error but don't spam the console
           console.debug('Polling error (this is normal if the endpoint is not yet available):', error);
         });
-    }, 5000); // Poll every 5 seconds
+    }, 3000); // Poll every 3 seconds (mais frequente para evitar timeouts)
     
     // Cleanup on page unload
     window.addEventListener('beforeunload', () => {
@@ -91,13 +119,13 @@ export const keepWebhookAlive = (webhookUrl: string): void => {
     fetch(webhookUrl, {
       method: 'HEAD',
       headers: {
-        'Keep-Alive': 'timeout=60, max=100'
+        'Keep-Alive': 'timeout=120, max=1000'
       },
     }).catch(err => {
       console.log('Heartbeat falhou, reconectando webhook...');
       // Tentar reconectar se o heartbeat falhar
     });
-  }, 45000); // Envia heartbeat a cada 45 segundos
+  }, 30000); // Envia heartbeat a cada 30 segundos (mais frequente)
   
   // Limpar o intervalo quando a janela for fechada
   window.addEventListener('beforeunload', () => {

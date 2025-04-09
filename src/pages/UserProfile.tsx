@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Upload, Mail, Lock, User } from 'lucide-react';
+import { ArrowLeft, Upload, Mail, Lock, User, Phone } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import PasswordChangeSection from '@/components/profile/PasswordChangeSection';
 
@@ -19,6 +19,11 @@ const profileFormSchema = z.object({
   full_name: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
   address: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres"),
   cpf_cnpj: z.string().min(11, "CPF/CNPJ deve ter pelo menos 11 caracteres"),
+  phone: z.string()
+    .min(10, "Telefone deve ter pelo menos 10 dígitos")
+    .refine((val) => /^\d+$/.test(val), {
+      message: "O telefone deve conter apenas números",
+    }),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -29,11 +34,16 @@ const UserProfile: React.FC = () => {
   const { user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Recuperar o número de telefone do localStorage
+  const storedPhone = localStorage.getItem('userPhone') || '';
+  
   const [profile, setProfile] = useState({
     full_name: '',
     address: '',
     cpf_cnpj: '',
-    profile_image: ''
+    profile_image: '',
+    phone: storedPhone
   });
   
   useEffect(() => {
@@ -56,7 +66,8 @@ const UserProfile: React.FC = () => {
             full_name: data.full_name || '',
             address: data.address || '',
             cpf_cnpj: data.cpf_cnpj || '',
-            profile_image: data.profile_image || ''
+            profile_image: data.profile_image || '',
+            phone: storedPhone || '' // Use phone from localStorage
           });
         }
       } catch (error: any) {
@@ -70,12 +81,13 @@ const UserProfile: React.FC = () => {
     };
     
     fetchUserProfile();
-  }, [user, toast]);
+  }, [user, toast, storedPhone]);
   
   const defaultValues: Partial<ProfileFormValues> = {
     full_name: profile?.full_name || "",
     address: profile?.address || "",
     cpf_cnpj: profile?.cpf_cnpj || "",
+    phone: profile?.phone || "",
   };
   
   const form = useForm<ProfileFormValues>({
@@ -90,6 +102,7 @@ const UserProfile: React.FC = () => {
         full_name: profile.full_name || "",
         address: profile.address || "",
         cpf_cnpj: profile.cpf_cnpj || "",
+        phone: profile.phone || "",
       });
     }
   }, [profile, form]);
@@ -99,6 +112,9 @@ const UserProfile: React.FC = () => {
     
     try {
       setIsLoading(true);
+      
+      // Salvar o número de telefone no localStorage
+      localStorage.setItem('userPhone', data.phone);
       
       const { error } = await supabase
         .from('user_profiles')
@@ -116,7 +132,8 @@ const UserProfile: React.FC = () => {
         ...profile,
         full_name: data.full_name,
         address: data.address,
-        cpf_cnpj: data.cpf_cnpj
+        cpf_cnpj: data.cpf_cnpj,
+        phone: data.phone
       });
       
       toast({
@@ -235,9 +252,9 @@ const UserProfile: React.FC = () => {
       </header>
       
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Coluna 1: Perfil e Informações Básicas */}
-          <Card className="col-span-1 md:col-span-2">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Perfil e Informações */}
+          <Card>
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold tracking-tight">Seu perfil</CardTitle>
               <CardDescription>
@@ -304,6 +321,28 @@ const UserProfile: React.FC = () => {
                     
                     <FormField
                       control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telefone</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                placeholder="Seu número de telefone" 
+                                className="pl-10" 
+                                {...field}
+                                type="tel"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
                       name="address"
                       render={({ field }) => (
                         <FormItem>
@@ -329,6 +368,11 @@ const UserProfile: React.FC = () => {
                         </FormItem>
                       )}
                     />
+
+                    {/* Área de redefinição de senha */}
+                    <div className="pt-4">
+                      <PasswordChangeSection />
+                    </div>
                     
                     <Button type="submit" disabled={isLoading} className="w-full">
                       {isLoading ? "Salvando..." : "Salvar alterações"}
@@ -336,20 +380,6 @@ const UserProfile: React.FC = () => {
                   </form>
                 </Form>
               </div>
-            </CardContent>
-          </Card>
-          
-          {/* Coluna 2: Segurança e Configurações */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Segurança</CardTitle>
-              <CardDescription>
-                Altere sua senha e configure opções de segurança
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <PasswordChangeSection />
             </CardContent>
           </Card>
         </div>

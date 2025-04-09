@@ -12,7 +12,7 @@ interface UseChatSenderProps {
 }
 
 export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChatSenderProps) => {
-  const webhookTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Send message to webhook with improved stability
   const sendMessage = useCallback(async (content: string, phoneNumber: string) => {
@@ -20,19 +20,15 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
 
     await addMessage(content, 'user', selectedFiles.map(f => f.file), phoneNumber);
     
-    // Limpar qualquer timeout anterior
-    if (webhookTimeoutRef.current) {
-      clearTimeout(webhookTimeoutRef.current);
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
     
     try {
       const controller = new AbortController();
+      abortControllerRef.current = controller;
       const signal = controller.signal;
-      
-      // Definir um timeout para a requisição com valor maior
-      webhookTimeoutRef.current = setTimeout(() => {
-        controller.abort();
-      }, 60000); // 60 segundos de timeout (aumentado de 30 para 60)
       
       const formData = new FormData();
       formData.append('telefone', phoneNumber);
@@ -47,11 +43,7 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         body: formData,
-        signal,
-        headers: {
-          'Connection': 'keep-alive',
-          'Keep-Alive': 'timeout=120, max=1000' // Aumentado o keep-alive
-        }
+        signal
       });
       
       if (!response.ok) {
@@ -71,18 +63,14 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
       console.error('Error sending message:', error);
       
       if ((error as Error).name === 'AbortError') {
-        await addMessage("A solicitação demorou muito tempo. Por favor, tente novamente.", 'ai', undefined, phoneNumber);
-        toast.error("Tempo limite excedido na solicitação");
+        // This is an expected case when we abort a previous request
+        console.log('Request was aborted intentionally');
       } else {
         await addMessage("Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.", 'ai', undefined, phoneNumber);
         toast.error("Erro ao enviar mensagem");
       }
     } finally {
-      if (webhookTimeoutRef.current) {
-        clearTimeout(webhookTimeoutRef.current);
-        webhookTimeoutRef.current = null;
-      }
-      
+      abortControllerRef.current = null;
       clearFiles();
     }
   }, [addMessage, selectedFiles, clearFiles]);

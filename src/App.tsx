@@ -51,30 +51,13 @@ function App() {
               <Index />
             </AppLayout>
           } />
-          <Route
-            path="/profile"
-            element={
-              session ? (
-                <AppLayout>
-                  <UserProfile />
-                </AppLayout>
-              ) : <Navigate to="/" />
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              session ? (
-                <AppLayout>
-                  <AdminPanel />
-                </AppLayout>
-              ) : <Navigate to="/" />
-            }
-          />
-          <Route
-            path="/profile-setup"
-            element={session ? <ProfileSetup /> : <Navigate to="/" />}
-          />
+          <Route path="/profile" element={
+            <AppLayout>
+              <UserProfile />
+            </AppLayout>
+          } />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/email-confirmation" element={<EmailConfirmation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

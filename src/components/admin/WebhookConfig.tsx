@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from 'sonner';
-import { Settings, RefreshCw, Copy, Check, Globe, Send, Webhook } from 'lucide-react';
+import { Settings, Copy, Check, Globe, Send, Webhook } from 'lucide-react';
 import { 
   getReceivingWebhookUrl, 
   saveReceivingWebhookUrl, 
@@ -16,7 +16,6 @@ import {
 const WebhookConfig: React.FC = () => {
   const [sendingWebhookUrl, setSendingWebhookUrl] = useState(WEBHOOK_URL);
   const [receivingWebhookUrl, setReceivingWebhookUrl] = useState(getReceivingWebhookUrl());
-  const [testingStatus, setTestingStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
 
   // Gerar URL automaticamente se não existir
@@ -50,41 +49,6 @@ const WebhookConfig: React.FC = () => {
     }, 2000);
   };
 
-  const testReceivingWebhook = async () => {
-    if (!receivingWebhookUrl) {
-      toast.error("Por favor, configure uma URL para receber mensagens");
-      return;
-    }
-
-    setTestingStatus('testing');
-
-    try {
-      // Tenta enviar uma mensagem de teste para a URL configurada
-      const response = await fetch(receivingWebhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: "Este é um teste do webhook de recebimento",
-          timestamp: new Date().toISOString()
-        })
-      });
-
-      if (response.ok) {
-        setTestingStatus('success');
-        toast.success("Teste de webhook bem-sucedido!");
-      } else {
-        setTestingStatus('error');
-        toast.error(`Erro no teste: ${response.statusText}`);
-      }
-    } catch (error) {
-      setTestingStatus('error');
-      toast.error(`Erro ao testar webhook: ${(error as Error).message}`);
-      console.error('Erro ao testar webhook:', error);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <Card>
@@ -111,8 +75,7 @@ const WebhookConfig: React.FC = () => {
               className="font-mono text-sm bg-muted"
             />
             <p className="text-sm text-muted-foreground">
-              Este é o endereço configurado para enviar mensagens para o agente N8N. 
-              Esta configuração é definida no código.
+              Este é o endereço configurado para enviar mensagens para o agente N8N.
             </p>
           </div>
           
@@ -148,30 +111,13 @@ const WebhookConfig: React.FC = () => {
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-primary">IMPORTANTE:</span> Esta é a URL que você deve configurar no N8N para enviar as respostas.
-              Use uma requisição HTTP POST para esta URL para que as mensagens retornem ao chat.
+              <span className="font-semibold text-primary">IMPORTANTE:</span> Configure esta URL no N8N para receber respostas.
+              A resposta será recebida imediatamente após o envio.
             </p>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={testReceivingWebhook}
-            disabled={testingStatus === 'testing' || !receivingWebhookUrl}
-            className="flex items-center gap-2"
-          >
-            {testingStatus === 'testing' ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Testando...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4" />
-                Testar Webhook
-              </>
-            )}
-          </Button>
+          <div></div> {/* Spacer */}
           <Button 
             onClick={handleSaveReceivingWebhook}
             disabled={!receivingWebhookUrl}
@@ -191,14 +137,14 @@ const WebhookConfig: React.FC = () => {
               <h3 className="font-semibold mb-1">Envio de Mensagens (já configurado)</h3>
               <p className="text-sm text-muted-foreground">
                 O sistema já está configurado para enviar mensagens para o webhook do N8N.
-                Mensagens enviadas pelo usuário serão encaminhadas para: <code className="bg-muted px-1 rounded">{WEBHOOK_URL}</code>
+                Mensagens enviadas pelo usuário são encaminhadas para: <code className="bg-muted px-1 rounded">{WEBHOOK_URL}</code>
               </p>
             </div>
             
             <div>
               <h3 className="font-semibold mb-1">Recebimento de Mensagens (IMPORTANTE)</h3>
               <p className="text-sm text-muted-foreground">
-                Para receber respostas do N8N, você deve configurar uma requisição HTTP POST
+                Para receber respostas do N8N, configure uma requisição HTTP POST
                 para a URL acima. A mensagem deve estar no formato:
               </p>
               <pre className="bg-muted p-2 rounded my-2 text-xs overflow-x-auto">

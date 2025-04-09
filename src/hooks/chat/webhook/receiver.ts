@@ -1,4 +1,3 @@
-
 import { getReceivingWebhookUrl } from './urls';
 
 // Configura um servidor para receber mensagens via HTTP POST

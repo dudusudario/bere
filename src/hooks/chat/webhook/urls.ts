@@ -12,14 +12,21 @@ export const generateReceivingWebhookUrl = (): string => {
   // Gera um ID único para o webhook
   const webhookId = Math.random().toString(36).substring(2, 15);
   
-  // Forma a URL completa para o endpoint de webhook na mesma aplicação
-  return `${baseUrl}/api/webhook/receive-messages/${webhookId}`;
+  // Forma a URL completa para o endpoint de webhook
+  return `${baseUrl}/api/webhook/receive/${webhookId}`;
 };
 
-// Get the receiving webhook URL from localStorage or generate a default one
+// Get the receiving webhook URL from localStorage or generate a new one
 export const getReceivingWebhookUrl = (): string => {
   const savedUrl = localStorage.getItem('receivingWebhookUrl');
-  return savedUrl || '';
+  if (savedUrl) {
+    return savedUrl;
+  }
+  
+  // No URL found, generate a new one
+  const newUrl = generateReceivingWebhookUrl();
+  localStorage.setItem('receivingWebhookUrl', newUrl);
+  return newUrl;
 };
 
 // Save the receiving webhook URL to localStorage

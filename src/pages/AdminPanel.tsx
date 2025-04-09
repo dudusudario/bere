@@ -1,13 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Users, MessageCircle, Settings, User, Globe } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import AdminHeader from '@/components/admin/AdminHeader';
+import DashboardCards from '@/components/admin/DashboardCards';
+import UsersTable from '@/components/admin/UsersTable';
+import MessagesSection from '@/components/admin/MessagesSection';
+import SettingsSection from '@/components/admin/SettingsSection';
 import WebhookConfig from '@/components/admin/WebhookConfig';
 
 interface UserWithProfile {
@@ -19,11 +19,9 @@ interface UserWithProfile {
 }
 
 const AdminPanel: React.FC = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('users');
   // Instead of using isAdmin from AuthContext, let's simplify for now
   const isAdmin = true; // Simplified since we removed authentication
 
@@ -54,18 +52,7 @@ const AdminPanel: React.FC = () => {
     };
     
     fetchUsers();
-  }, [navigate, toast]);
-  
-  // Função para obter as iniciais do nome para o avatar
-  const getInitials = (name: string | null) => {
-    if (!name) return "U";
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+  }, [toast]);
 
   // Mock profile for display purposes since we removed auth
   const profile = {
@@ -75,28 +62,7 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-background sticky top-0 z-10">
-        <div className="container mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/chat')}
-            className="flex items-center gap-1"
-          >
-            <ArrowLeft className="h-4 w-4" /> Voltar para o chat
-          </Button>
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Button variant="outline" size="sm">
-                Painel de Administração
-              </Button>
-            )}
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.profile_image || ''} alt={profile?.full_name || 'Admin'} />
-              <AvatarFallback>{profile?.full_name ? getInitials(profile.full_name) : 'A'}</AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-      </header>
+      <AdminHeader profile={profile} isAdmin={isAdmin} />
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Painel de Administração</h1>
@@ -111,156 +77,19 @@ const AdminPanel: React.FC = () => {
           </TabsList>
           
           <TabsContent value="dashboard">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    Usuários
-                  </CardTitle>
-                  <CardDescription>Gerenciar usuários do sistema</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate('/admin/users')} className="w-full">
-                    Ver Usuários
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageCircle className="h-5 w-5 text-primary" />
-                    Mensagens
-                  </CardTitle>
-                  <CardDescription>Visualizar histórico de mensagens</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate('/admin/messages')} className="w-full">
-                    Ver Mensagens
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-primary" />
-                    Configurações
-                  </CardTitle>
-                  <CardDescription>Configurações do sistema</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate('/admin/settings')} className="w-full">
-                    Ver Configurações
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-primary" />
-                    Webhooks
-                  </CardTitle>
-                  <CardDescription>Configurações de Webhooks</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => document.getElementById('webhooks-tab')?.click()} className="w-full">
-                    Configurar Webhooks
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+            <DashboardCards />
           </TabsContent>
           
           <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  Usuários Registrados
-                </CardTitle>
-                <CardDescription>Lista de todos os usuários registrados no sistema</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : users.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4">Usuário</th>
-                          <th className="text-left py-3 px-4">Email</th>
-                          <th className="text-left py-3 px-4">Registrado em</th>
-                          <th className="text-right py-3 px-4">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {users.map((user) => (
-                          <tr key={user.id} className="border-b hover:bg-muted/50">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={user.profile_image || ''} alt={user.full_name || ''} />
-                                  <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
-                                </Avatar>
-                                <span>{user.full_name || 'Usuário sem nome'}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">{user.email || 'N/A'}</td>
-                            <td className="py-3 px-4">
-                              {user.created_at 
-                                ? new Date(user.created_at).toLocaleDateString('pt-BR')
-                                : 'N/A'
-                              }
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <Button variant="outline" size="sm">
-                                Ver detalhes
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado.</p>
-                )}
-              </CardContent>
-            </Card>
+            <UsersTable users={users} loading={loading} />
           </TabsContent>
           
           <TabsContent value="messages">
-            <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Mensagens</CardTitle>
-                <CardDescription>Visualize todas as mensagens trocadas no sistema</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center py-8 text-muted-foreground">
-                  Funcionalidade em desenvolvimento.
-                </p>
-              </CardContent>
-            </Card>
+            <MessagesSection />
           </TabsContent>
           
           <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurações do Sistema</CardTitle>
-                <CardDescription>Gerenciar as configurações gerais da plataforma</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center py-8 text-muted-foreground">
-                  Funcionalidade em desenvolvimento.
-                </p>
-              </CardContent>
-            </Card>
+            <SettingsSection />
           </TabsContent>
           
           <TabsContent value="webhooks" id="webhooks-tab">

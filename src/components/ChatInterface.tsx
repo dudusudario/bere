@@ -6,13 +6,15 @@ import FileUpload from './FileUpload';
 import TypingIndicator from './TypingIndicator';
 import ProfileEditSheet from './ProfileEditSheet';
 import { useChat } from '../hooks/chat';
-import { Loader2, User, Phone } from 'lucide-react';
+import { Loader2, User, Phone, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { sendToN8n } from '../utils/sendToN8n';
 import ChatFeed from './ChatFeed';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const ChatInterface: React.FC = () => {
+  const navigate = useNavigate();
   const userPhone = localStorage.getItem('userPhone') || '';
   const [profileOpen, setProfileOpen] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -84,6 +86,10 @@ const ChatInterface: React.FC = () => {
     deleteMessage(messageId);
   };
 
+  const goToWebhookConfig = () => {
+    navigate('/admin');
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
       {/* Profile button */}
@@ -100,15 +106,27 @@ const ChatInterface: React.FC = () => {
           </div>
         )}
         
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="flex items-center gap-2"
-          onClick={() => setProfileOpen(true)}
-        >
-          <User className="h-4 w-4" />
-          <span>Perfil</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={goToWebhookConfig}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Webhooks</span>
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => setProfileOpen(true)}
+          >
+            <User className="h-4 w-4" />
+            <span>Perfil</span>
+          </Button>
+        </div>
         <ProfileEditSheet open={profileOpen} onOpenChange={setProfileOpen} />
       </div>
 

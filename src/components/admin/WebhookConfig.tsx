@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from 'sonner';
-import { Settings, Copy, Check, Globe, Send, Webhook } from 'lucide-react';
+import { Settings, Copy, Check, Globe, Send, Webhook, ArrowRight, ExternalLink, RefreshCw } from 'lucide-react';
 import { 
   getReceivingWebhookUrl, 
   saveReceivingWebhookUrl, 
@@ -17,6 +18,7 @@ const WebhookConfig: React.FC = () => {
   const [sendingWebhookUrl, setSendingWebhookUrl] = useState(WEBHOOK_URL);
   const [receivingWebhookUrl, setReceivingWebhookUrl] = useState(getReceivingWebhookUrl());
   const [copied, setCopied] = useState(false);
+  const [testingReceiving, setTestingReceiving] = useState(false);
 
   // Gerar URL automaticamente se não existir
   useEffect(() => {
@@ -49,8 +51,43 @@ const WebhookConfig: React.FC = () => {
     }, 2000);
   };
 
+  // Função para testar o recebimento de mensagens
+  const testReceiveWebhook = async () => {
+    setTestingReceiving(true);
+    try {
+      // Simulação de recebimento de mensagem
+      const response = await fetch(receivingWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: "Esta é uma mensagem de teste do webhook. Se você está vendo isso, a configuração está funcionando corretamente!",
+          sender: "ai",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      
+      toast.success("Mensagem de teste enviada com sucesso! Verifique o chat para ver se a mensagem aparece.");
+    } catch (error) {
+      console.error("Erro ao testar webhook:", error);
+      toast.error("Erro ao testar webhook de recebimento. Verifique se a URL está correta.");
+    } finally {
+      setTestingReceiving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 mb-6">
+        <ExternalLink className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <AlertTitle>Configuração de Webhook</AlertTitle>
+        <AlertDescription>
+          Configure esta página para permitir que o N8N envie respostas de volta para o seu chat. 
+          Você precisará copiar a URL de recebimento e configurá-la no N8N.
+        </AlertDescription>
+      </Alert>
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -80,9 +117,9 @@ const WebhookConfig: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="receivingWebhookUrl" className="flex items-center gap-2">
+            <Label htmlFor="receivingWebhookUrl" className="flex items-center gap-2 text-primary font-semibold">
               <Webhook className="h-4 w-4" />
-              URL para Receber Mensagens (IMPORTANTE)
+              URL para Receber Mensagens (COPIE ESTA URL)
             </Label>
             <div className="flex space-x-2">
               <div className="relative flex-1">
@@ -107,20 +144,44 @@ const WebhookConfig: React.FC = () => {
                 variant="outline"
                 onClick={generateNewReceivingUrl}
               >
-                Gerar URL
+                <RefreshCw className="h-4 w-4 mr-2" /> Gerar URL
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-primary">IMPORTANTE:</span> Configure esta URL no N8N para receber respostas.
-              A resposta será recebida imediatamente após o envio.
-            </p>
+            <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-3 mt-3">
+              <h4 className="font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                <ArrowRight className="h-4 w-4" /> O que fazer com esta URL:
+              </h4>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                <span className="font-semibold">IMPORTANTE:</span> Copie esta URL e configure-a no N8N como o endpoint 
+                para onde as respostas devem ser enviadas.
+              </p>
+            </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <div></div> {/* Spacer */}
+        <CardFooter className="flex justify-between flex-col sm:flex-row gap-4">
+          <Button 
+            variant="outline"
+            onClick={testReceiveWebhook}
+            disabled={testingReceiving || !receivingWebhookUrl}
+            className="w-full sm:w-auto"
+          >
+            {testingReceiving ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Testando...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                Testar Recebimento
+              </>
+            )}
+          </Button>
+          
           <Button 
             onClick={handleSaveReceivingWebhook}
             disabled={!receivingWebhookUrl}
+            className="w-full sm:w-auto"
           >
             Salvar Configuração
           </Button>

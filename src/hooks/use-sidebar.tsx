@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 type SidebarContextType = {
   open: boolean;

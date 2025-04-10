@@ -60,8 +60,9 @@ export const saveMessageToSupabase = async ({ username, numero, mensagem, origem
   try {
     const { supabase } = await import('@/integrations/supabase/client');
     
+    // Use type assertion since the table isn't in TypeScript definitions
     const { error } = await supabase
-      .from('user_menssagens')
+      .from('user_menssagens' as any)
       .insert({
         username,
         numero,

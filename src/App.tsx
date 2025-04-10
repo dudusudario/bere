@@ -1,7 +1,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "./components/AppLayout";
 import Index from "./pages/Index";
@@ -12,6 +12,9 @@ import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
 import ChatInterface from "./components/ChatInterface";
+
+// Lazy load the messages page
+const MessagesPage = lazy(() => import('./pages/dashboard/mensagens'));
 
 function App() {
   const queryClient = new QueryClient();
@@ -68,10 +71,9 @@ function App() {
           <Route path="/dashboard/mensagens" element={
             <AppLayout>
               <div className="dashboard-page">
-                {/* Using dynamic import for lazy loading */}
-                {React.createElement(
-                  React.lazy(() => import('./pages/dashboard/mensagens'))
-                )}
+                <Suspense fallback={<div>Carregando...</div>}>
+                  <MessagesPage />
+                </Suspense>
               </div>
             </AppLayout>
           } />

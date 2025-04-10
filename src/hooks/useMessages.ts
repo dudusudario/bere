@@ -22,14 +22,15 @@ export function useMessages(phoneNumber?: string) {
     try {
       setIsLoading(true);
       
-      let query = supabase
-        .from('user_menssagens')
+      // Use type assertion to handle the table not being in the TypeScript definitions
+      const query = supabase
+        .from('user_menssagens' as any)
         .select('*')
         .order('timestamp', { ascending: true });
       
       // Filter by phone number if provided
       if (phoneNumber) {
-        query = query.eq('numero', phoneNumber);
+        query.eq('numero', phoneNumber);
       }
       
       const { data, error } = await query;
@@ -38,7 +39,8 @@ export function useMessages(phoneNumber?: string) {
         throw error;
       }
       
-      setMessages(data as Message[]);
+      // Use type assertion to convert to Message[]
+      setMessages(data as unknown as Message[]);
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError(err as Error);
@@ -64,7 +66,7 @@ export function useMessages(phoneNumber?: string) {
           filter: phoneNumber ? `numero=eq.${phoneNumber}` : undefined
         },
         (payload) => {
-          const newMessage = payload.new as Message;
+          const newMessage = payload.new as unknown as Message;
           setMessages((prevMessages) => [...prevMessages, newMessage]);
         }
       )

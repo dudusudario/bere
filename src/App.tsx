@@ -65,6 +65,16 @@ function App() {
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/email-confirmation" element={<EmailConfirmation />} />
+          <Route path="/dashboard/mensagens" element={
+            <AppLayout>
+              <div className="dashboard-page">
+                {/* Using dynamic import for lazy loading */}
+                {React.createElement(
+                  React.lazy(() => import('./pages/dashboard/mensagens'))
+                )}
+              </div>
+            </AppLayout>
+          } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

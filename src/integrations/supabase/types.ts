@@ -1211,6 +1211,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_menssagens: {
+        Row: {
+          id: number
+          mensagem: string
+          numero: string
+          origem: string
+          timestamp: string | null
+          username: string | null
+        }
+        Insert: {
+          id?: number
+          mensagem: string
+          numero: string
+          origem: string
+          timestamp?: string | null
+          username?: string | null
+        }
+        Update: {
+          id?: number
+          mensagem?: string
+          numero?: string
+          origem?: string
+          timestamp?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           address: string | null

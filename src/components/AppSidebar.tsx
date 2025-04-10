@@ -127,10 +127,11 @@ export function AppSidebar() {
                     isActive={item.isActive}
                     className="flex items-center gap-3"
                   >
-                    {item.icon}
+                    <div className="flex-shrink-0">{item.icon}</div>
                     <motion.span
                       animate={{
                         opacity: open ? 1 : 0,
+                        width: open ? 'auto' : 0,
                         display: open ? 'inline-block' : 'none'
                       }}
                       transition={{ duration: 0.2 }}
@@ -150,10 +151,13 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Sair" onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
+              <div className="flex-shrink-0">
+                <LogOut className="h-5 w-5" />
+              </div>
               <motion.span
                 animate={{
                   opacity: open ? 1 : 0,
+                  width: open ? 'auto' : 0,
                   display: open ? 'inline-block' : 'none'
                 }}
                 transition={{ duration: 0.2 }}

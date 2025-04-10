@@ -16,6 +16,8 @@ const ChatInterface: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  // Define a constant for webhook enabled status instead of using process.env
+  const isWebhookEnabled = true; // Set to true to enable webhook functionality
   
   const {
     messages,
@@ -77,8 +79,6 @@ const ChatInterface: React.FC = () => {
   const handleDeleteMessage = (messageId: string) => {
     deleteMessage(messageId);
   };
-
-  const isWebhookEnabled = process.env.NEXT_PUBLIC_USE_WEBHOOK === 'true';
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">

@@ -1,4 +1,3 @@
-
 // Re-export all components from their new locations
 
 // Message types
@@ -21,10 +20,11 @@ export {
 
 // Webhook utilities
 export { 
-  WEBHOOK_URL, 
-  getReceivingWebhookUrl, 
-  saveReceivingWebhookUrl, 
-  generateReceivingWebhookUrl 
+  WEBHOOK_URL,
+  // Keeping these exports for compatibility, but they do nothing now
+  getReceivingWebhookUrl,
+  saveReceivingWebhookUrl,
+  generateReceivingWebhookUrl
 } from './webhook/urls';
 export { 
   setupMessageReceiver, 

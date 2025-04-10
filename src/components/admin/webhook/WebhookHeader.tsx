@@ -14,7 +14,7 @@ const WebhookHeader: React.FC<WebhookHeaderProps> = ({ webhookAccessible }) => {
       <AlertTitle>Configuração de Webhook</AlertTitle>
       <AlertDescription>
         Esta página mostra a configuração do webhook para envio de mensagens ao N8N.
-        As respostas são processadas internamente pelo sistema.
+        As respostas são processadas diretamente pelo agente sem necessidade de webhook de resposta.
       </AlertDescription>
     </Alert>
   );

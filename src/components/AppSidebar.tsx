@@ -112,8 +112,9 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <motion.div
-            animate={{ opacity: open ? 1 : 0 }}
+            animate={{ opacity: open ? 1 : 0, height: open ? 'auto' : 0 }}
             transition={{ duration: 0.2 }}
+            className="overflow-hidden"
           >
             <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           </motion.div>
@@ -122,7 +123,7 @@ export function AppSidebar() {
               {menuItems.map((item, index) => (
                 <SidebarMenuItem key={index}>
                   <SidebarMenuButton 
-                    tooltip={item.label} 
+                    tooltip={!open ? item.label : undefined} 
                     onClick={item.action}
                     isActive={item.isActive}
                     className="flex items-center gap-3"
@@ -131,11 +132,10 @@ export function AppSidebar() {
                     <motion.span
                       animate={{
                         opacity: open ? 1 : 0,
-                        width: open ? 'auto' : 0,
-                        display: open ? 'inline-block' : 'none'
+                        width: open ? 'auto' : 0
                       }}
                       transition={{ duration: 0.2 }}
-                      className="whitespace-pre text-sm group-hover/sidebar:translate-x-1 transition duration-150"
+                      className="whitespace-pre text-sm group-hover/sidebar:translate-x-1 transition duration-150 overflow-hidden"
                     >
                       {item.label}
                     </motion.span>
@@ -150,17 +150,17 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Sair" onClick={handleLogout}>
+            <SidebarMenuButton tooltip={!open ? "Sair" : undefined} onClick={handleLogout}>
               <div className="flex-shrink-0">
                 <LogOut className="h-5 w-5" />
               </div>
               <motion.span
                 animate={{
                   opacity: open ? 1 : 0,
-                  width: open ? 'auto' : 0,
-                  display: open ? 'inline-block' : 'none'
+                  width: open ? 'auto' : 0
                 }}
                 transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
                 Sair
               </motion.span>

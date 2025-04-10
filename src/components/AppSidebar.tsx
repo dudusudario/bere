@@ -79,8 +79,8 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   tooltip="Página Inicial" 
-                  onClick={() => handleNavigation('/')}
-                  isActive={isActive('/')}
+                  onClick={() => handleNavigation('/dashboard')}
+                  isActive={isActive('/dashboard')}
                 >
                   <Home className="h-5 w-5" />
                   <span>Página Inicial</span>

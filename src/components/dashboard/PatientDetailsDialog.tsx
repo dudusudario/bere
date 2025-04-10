@@ -1,7 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -10,11 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-  DialogClose
+  DialogFooter
 } from "@/components/ui/dialog";
 import { PatientStatusSelect } from './PatientStatusSelect';
 import { PatientInfoDisplay } from './PatientInfoDisplay';
+import { PatientDialogActions } from './PatientDialogActions';
 
 interface Patient {
   id: number;
@@ -106,15 +104,7 @@ export const PatientDetailsDialog: React.FC<PatientDetailsDialogProps> = ({
         )}
 
         <DialogFooter className="sm:justify-end">
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Fechar
-            </Button>
-          </DialogClose>
-          <Button type="button">
-            <Calendar className="mr-2 h-4 w-4" />
-            Agendar Consulta
-          </Button>
+          <PatientDialogActions isUpdating={isUpdating} />
         </DialogFooter>
       </DialogContent>
     </Dialog>

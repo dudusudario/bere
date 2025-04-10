@@ -12,6 +12,7 @@ export { PatientsDetailedView } from './PatientsDetailedView';
 export { PatientDetailsDialog } from './PatientDetailsDialog';
 export { PatientInfoDisplay } from './PatientInfoDisplay';
 export { PatientStatusSelect } from './PatientStatusSelect';
+export { PatientDialogActions } from './PatientDialogActions';
 export { PatientFilters } from './PatientFilters';
 export { PatientPagination } from './PatientPagination';
 export { PatientActions } from './PatientActions';

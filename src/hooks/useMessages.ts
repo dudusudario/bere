@@ -4,50 +4,69 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type Message = {
   id: string;
-  content: string;
+  content?: string;
+  mensagem?: string; // Added for compatibility
   sender: string;
+  origem?: 'user' | 'agent'; // Added for compatibility
   timestamp: Date;
   read: boolean;
+  username?: string; // Added for compatibility
+  numero?: string; // Added for compatibility
 };
 
-export const useMessages = () => {
+export const useMessages = (phoneNumber?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Added for compatibility
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         setLoading(true);
+        setIsLoading(true);
         
-        // Simulando busca de mensagens
-        // Em um ambiente real, seria algo como:
-        // const { data, error } = await supabase.from('messages').select('*').order('timestamp', { ascending: false });
-        
-        // Dados mockados para exemplo
-        const mockMessages: Message[] = [
+        // Filter messages by phone number if provided
+        let mockMessages: Message[] = [
           {
             id: '1',
             content: 'Reunião agendada para amanhã às 10h',
+            mensagem: 'Reunião agendada para amanhã às 10h',
             sender: 'Sistema',
+            origem: 'agent',
             timestamp: new Date(),
-            read: false
+            read: false,
+            username: 'Sistema',
+            numero: phoneNumber || '123456789'
           },
           {
             id: '2',
             content: 'Lembrete: Consulta com Dra. Ana às 14h',
+            mensagem: 'Lembrete: Consulta com Dra. Ana às 14h',
             sender: 'Sistema',
+            origem: 'agent',
             timestamp: new Date(Date.now() - 86400000), // 1 dia atrás
-            read: true
+            read: true,
+            username: 'Sistema',
+            numero: phoneNumber || '123456789'
           },
           {
             id: '3',
             content: 'Nova mensagem de Paulo sobre o projeto',
+            mensagem: 'Nova mensagem de Paulo sobre o projeto',
             sender: 'Paulo Motta',
+            origem: 'user',
             timestamp: new Date(Date.now() - 172800000), // 2 dias atrás
-            read: false
+            read: false,
+            username: 'Paulo Motta',
+            numero: phoneNumber || '987654321'
           }
         ];
+        
+        // If phone number is provided, filter messages
+        if (phoneNumber) {
+          mockMessages = mockMessages.filter(msg => msg.numero === phoneNumber);
+        }
         
         setMessages(mockMessages);
         setError(null);
@@ -56,23 +75,12 @@ export const useMessages = () => {
         console.error('Error fetching messages:', err);
       } finally {
         setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchMessages();
-    
-    // Em um app real, poderíamos configurar um listener para atualizações em tempo real
-    // const subscription = supabase
-    //  .channel('messages')
-    //  .on('INSERT', payload => {
-    //    setMessages(prev => [payload.new, ...prev]);
-    //  })
-    //  .subscribe();
-    
-    // return () => {
-    //   subscription.unsubscribe();
-    // };
-  }, []);
+  }, [phoneNumber]);
 
   const markAsRead = async (id: string) => {
     // Em um app real:
@@ -96,12 +104,28 @@ export const useMessages = () => {
     );
   };
 
+  // Added for compatibility
+  const refreshMessages = async () => {
+    try {
+      setIsLoading(true);
+      // In a real app, this would fetch fresh messages
+      // For now we just simulate a refresh
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (err) {
+      setError('Erro ao atualizar mensagens');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     messages,
     loading,
     error,
+    isLoading,
     markAsRead,
-    deleteMessage
+    deleteMessage,
+    refreshMessages
   };
 };
 

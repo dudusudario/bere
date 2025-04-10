@@ -22,4 +22,7 @@ export function useMobile(breakpoint: number = 768) {
   return isMobile;
 }
 
+// Add this alias for backwards compatibility
+export const useIsMobile = useMobile;
+
 export default useMobile;

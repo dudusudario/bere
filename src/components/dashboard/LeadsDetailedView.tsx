@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/pagination";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { LeadDetailsDialog } from './LeadDetailsDialog';
 
 // Define the lead type to match supabase table structure
 interface Lead {
@@ -39,44 +40,46 @@ interface Lead {
 
 export const LeadsDetailedView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // Changed from empty string to 'all'
-  const [interestFilter, setInterestFilter] = useState('all'); // Changed from empty string to 'all'
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [interestFilter, setInterestFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const itemsPerPage = 5;
 
   // Fetch leads from Supabase
-  useEffect(() => {
-    const fetchLeads = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('leads')
-          .select('id, name, whatsapp, tags, interesse, "e-mail", created_at')
-          .order('id', { ascending: false })
-          .limit(5);
+  const fetchLeads = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('id, name, whatsapp, tags, interesse, "e-mail", created_at')
+        .order('id', { ascending: false })
+        .limit(5);
 
-        if (error) {
-          throw error;
-        }
-
-        console.log('Fetched leads data:', data);
-        setLeads(data || []);
-        setFilteredLeads(data || []);
-      } catch (error) {
-        console.error('Error fetching leads:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao buscar leads',
-          description: 'Não foi possível carregar os dados dos leads.',
-        });
-      } finally {
-        setIsLoading(false);
+      if (error) {
+        throw error;
       }
-    };
 
+      console.log('Fetched leads data:', data);
+      setLeads(data || []);
+      setFilteredLeads(data || []);
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao buscar leads',
+        description: 'Não foi possível carregar os dados dos leads.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLeads();
   }, []);
 
@@ -88,7 +91,6 @@ export const LeadsDetailedView: React.FC = () => {
         (lead.whatsapp?.includes(searchQuery) || false) ||
         (lead["e-mail"]?.toLowerCase() || '').includes(searchQuery.toLowerCase());
       
-      // Modified to check against 'all' instead of empty string
       const matchesStatus = statusFilter === 'all' || lead.tags === statusFilter;
       const matchesInterest = interestFilter === 'all' || lead.interesse === interestFilter;
       
@@ -106,6 +108,23 @@ export const LeadsDetailedView: React.FC = () => {
   // Get unique statuses and interests for filter options
   const statuses = [...new Set(leads.map(lead => lead.tags).filter(Boolean))] as string[];
   const interests = [...new Set(leads.map(lead => lead.interesse).filter(Boolean))] as string[];
+
+  const handleLeadClick = (lead: Lead) => {
+    setSelectedLead(lead);
+    setIsDialogOpen(true);
+  };
+
+  const statusOptions = [
+    { value: "gengivoplastia", label: "Gengivoplastia" },
+    { value: "implante", label: "Implante" },
+    { value: "protese", label: "Prótese" },
+    { value: "dentadura", label: "Dentadura" },
+    { value: "canal", label: "Canal" },
+    { value: "coroa", label: "Coroa" },
+    { value: "lentes", label: "Lentes" },
+    { value: "desqualificado", label: "Desqualificado" },
+    { value: "pausado", label: "Pausado" }
+  ];
 
   return (
     <div className="space-y-4">
@@ -134,9 +153,15 @@ export const LeadsDetailedView: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os Status</SelectItem>
-                    {statuses.map(status => (
-                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    {statusOptions.map(status => (
+                      <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
                     ))}
+                    {statuses
+                      .filter(status => !statusOptions.some(opt => opt.value === status))
+                      .map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))
+                    }
                   </SelectContent>
                 </Select>
               </div>
@@ -162,7 +187,7 @@ export const LeadsDetailedView: React.FC = () => {
                 <p>Carregando leads...</p>
               </div>
             ) : (
-              <LeadsTable leads={currentLeads} />
+              <LeadsTable leads={currentLeads} onLeadClick={handleLeadClick} />
             )}
           </div>
 
@@ -187,6 +212,13 @@ export const LeadsDetailedView: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <LeadDetailsDialog 
+        isOpen={isDialogOpen} 
+        onClose={() => setIsDialogOpen(false)} 
+        lead={selectedLead} 
+        onLeadUpdated={fetchLeads}
+      />
     </div>
   );
 };

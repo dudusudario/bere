@@ -17,9 +17,10 @@ interface Lead {
 
 interface LeadsTableProps {
   leads: Lead[];
+  onLeadClick: (lead: Lead) => void;
 }
 
-export const LeadsTable: React.FC<LeadsTableProps> = ({ leads }) => {
+export const LeadsTable: React.FC<LeadsTableProps> = ({ leads, onLeadClick }) => {
   if (leads.length === 0) {
     return (
       <div className="text-center p-6 text-muted-foreground">
@@ -42,6 +43,24 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({ leads }) => {
     }
   };
 
+  const getStatusColor = (status?: string) => {
+    if (!status) return 'bg-gray-50 text-gray-700 border-gray-200';
+    
+    const status_lower = status.toLowerCase();
+    
+    if (status_lower.includes('gengivoplastia')) return 'bg-green-50 text-green-700 border-green-200';
+    if (status_lower.includes('implante')) return 'bg-orange-50 text-orange-700 border-orange-200';
+    if (status_lower.includes('protese')) return 'bg-pink-50 text-pink-700 border-pink-200';
+    if (status_lower.includes('dentadura')) return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+    if (status_lower.includes('canal')) return 'bg-purple-50 text-purple-700 border-purple-200';
+    if (status_lower.includes('coroa')) return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (status_lower.includes('lentes')) return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (status_lower.includes('desqualificado')) return 'bg-red-50 text-red-700 border-red-200';
+    if (status_lower.includes('pausado')) return 'bg-gray-50 text-gray-700 border-gray-200';
+    
+    return 'bg-gray-50 text-gray-700 border-gray-200';
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -56,20 +75,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({ leads }) => {
       </TableHeader>
       <TableBody>
         {leads.map((lead) => (
-          <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/80">
+          <TableRow 
+            key={lead.id} 
+            className="cursor-pointer hover:bg-muted/80"
+            onClick={() => onLeadClick(lead)}
+          >
             <TableCell className="font-medium">{lead.name || '-'}</TableCell>
             <TableCell>{lead.whatsapp || '-'}</TableCell>
             <TableCell>
               {lead.tags ? (
-                <Badge variant="outline" className={
-                  lead.tags.toLowerCase().includes('novo') ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                  lead.tags.toLowerCase().includes('contato') ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  lead.tags.toLowerCase().includes('qualificado') ? 'bg-green-50 text-green-700 border-green-200' :
-                  lead.tags.toLowerCase().includes('desqualificado') ? 'bg-red-50 text-red-700 border-red-200' :
-                  lead.tags.toLowerCase().includes('agendado') ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                  lead.tags.toLowerCase().includes('pausado') ? 'bg-gray-50 text-gray-700 border-gray-200' :
-                  'bg-gray-50 text-gray-700 border-gray-200'
-                }>
+                <Badge variant="outline" className={getStatusColor(lead.tags)}>
                   {lead.tags}
                 </Badge>
               ) : '-'}

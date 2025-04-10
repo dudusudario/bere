@@ -84,7 +84,9 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center">
-            <h2 className="text-xl font-bold text-primary">Berenice</h2>
+            <h2 className="text-xl font-bold text-primary">
+              {state === "collapsed" && !isHovering ? "B" : "Berenice"}
+            </h2>
           </div>
           {isMobile && (
             <SidebarTrigger />

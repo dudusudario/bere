@@ -4,9 +4,8 @@ import { useMessages } from '@/hooks/useMessages';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Search } from 'lucide-react';
+import { formatDisplayTimestamp } from '@/utils/dateFormatter';
 
 const MensagensPage = () => {
   const [searchPhone, setSearchPhone] = useState('');
@@ -16,10 +15,6 @@ const MensagensPage = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setFilterPhone(searchPhone);
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    return format(new Date(timestamp), 'dd/MM/yyyy HH:mm', { locale: ptBR });
   };
 
   return (
@@ -70,7 +65,7 @@ const MensagensPage = () => {
                     {message.origem === 'user' ? 'Usuário' : 'Agente'}
                   </CardTitle>
                   <span className="text-xs text-muted-foreground">
-                    {formatTimestamp(message.timestamp)}
+                    {formatDisplayTimestamp(message.timestamp)}
                   </span>
                 </div>
               </CardHeader>

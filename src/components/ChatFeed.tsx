@@ -1,10 +1,8 @@
-
 import React, { useRef, useEffect } from 'react';
 import { useMessages, Message } from '@/hooks/useMessages';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { formatDisplayTimestamp } from '@/utils/dateFormatter';
 
 interface ChatFeedProps {
   phoneNumber?: string;
@@ -27,14 +25,6 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({ phoneNumber }) => {
     }
   }, [messages]);
 
-  const formatTimestamp = (timestamp: string) => {
-    try {
-      return format(new Date(timestamp), 'dd/MM/yyyy HH:mm', { locale: ptBR });
-    } catch (e) {
-      return 'Data inválida';
-    }
-  };
-
   const renderMessage = (message: Message) => {
     const isUser = message.origem === 'user';
     
@@ -55,7 +45,7 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({ phoneNumber }) => {
           </div>
           <div className="text-sm mb-1 whitespace-pre-wrap">{message.mensagem}</div>
           <div className="text-xs opacity-70 text-right">
-            {formatTimestamp(message.timestamp)}
+            {formatDisplayTimestamp(message.timestamp)}
           </div>
         </div>
       </div>

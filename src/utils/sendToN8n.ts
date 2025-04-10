@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentTimestampWithTimezone } from "@/utils/dateFormatter";
 
 const N8N_WEBHOOK_URL = "https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-a5a3-33053921db0e";
 
@@ -27,6 +28,7 @@ export const sendToN8n = async ({ username, numero, mensagem }: SendMessageParam
         user: username,
         numero,
         mensagem,
+        timestamp: getCurrentTimestampWithTimezone() // Adiciona timestamp no formato correto
       }),
     });
 
@@ -59,6 +61,8 @@ interface SaveMessageParams {
 
 export const saveMessageToSupabase = async ({ username, numero, mensagem, origem }: SaveMessageParams): Promise<boolean> => {
   try {
+    const timestamp = getCurrentTimestampWithTimezone();
+    
     // Insert the message into the user_menssagens table
     const { error } = await supabase
       .from('user_menssagens' as any)
@@ -67,6 +71,7 @@ export const saveMessageToSupabase = async ({ username, numero, mensagem, origem
         numero,
         mensagem,
         origem,
+        timestamp // Usando o formato ISO com timezone
       });
 
     if (error) {

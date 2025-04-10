@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
+import { format, subDays, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { SearchInput } from './SearchInput';
 import { LeadsTable } from './LeadsTable';
 import { 
@@ -42,6 +44,7 @@ export const LeadsDetailedView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [interestFilter, setInterestFilter] = useState('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -57,8 +60,7 @@ export const LeadsDetailedView: React.FC = () => {
       const { data, error } = await supabase
         .from('leads')
         .select('id, name, whatsapp, tags, interesse, "e-mail", created_at')
-        .order('id', { ascending: false })
-        .limit(5);
+        .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
@@ -83,26 +85,55 @@ export const LeadsDetailedView: React.FC = () => {
     fetchLeads();
   }, []);
 
-  // Filter leads based on search query and filters
+  // Filter leads based on search query, status filter, and date range
   useEffect(() => {
+    if (!leads) return;
+
+    // Get current date
+    const currentDate = new Date();
+    
+    // Calculate date ranges
+    let dateFilter: Date | null = null;
+    if (dateRangeFilter === '30') {
+      dateFilter = subDays(currentDate, 30);
+    } else if (dateRangeFilter === '60') {
+      dateFilter = subDays(currentDate, 60);
+    } else if (dateRangeFilter === '90') {
+      dateFilter = subDays(currentDate, 90);
+    }
+
     const filtered = leads.filter(lead => {
+      // Filter by search query (name, whatsapp, or email)
       const matchesSearch = 
         (lead.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
         (lead.whatsapp?.includes(searchQuery) || false) ||
         (lead["e-mail"]?.toLowerCase() || '').includes(searchQuery.toLowerCase());
       
+      // Filter by status
       const matchesStatus = statusFilter === 'all' || lead.tags === statusFilter;
+      
+      // Filter by interest
       const matchesInterest = interestFilter === 'all' || lead.interesse === interestFilter;
       
-      return matchesSearch && matchesStatus && matchesInterest;
+      // Filter by date range
+      let matchesDateRange = true;
+      if (dateFilter && lead.created_at) {
+        const leadDate = parseISO(lead.created_at);
+        matchesDateRange = leadDate >= dateFilter;
+      }
+      
+      return matchesSearch && matchesStatus && matchesInterest && matchesDateRange;
     });
 
     setFilteredLeads(filtered);
     setCurrentPage(1); // Reset to first page when filtering
-  }, [searchQuery, statusFilter, interestFilter, leads]);
+  }, [searchQuery, statusFilter, interestFilter, dateRangeFilter, leads]);
 
-  // Paginate results (although we're limiting to 5 leads from the query)
-  const currentLeads = filteredLeads;
+  // Paginate results
+  const paginatedLeads = filteredLeads.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
   const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
 
   // Get unique statuses and interests for filter options
@@ -145,8 +176,8 @@ export const LeadsDetailedView: React.FC = () => {
                 onChange={setSearchQuery}
               />
             </div>
-            <div className="flex flex-1 gap-2">
-              <div className="w-full md:w-1/2">
+            <div className="flex flex-1 flex-col md:flex-row gap-2">
+              <div className="w-full md:w-1/3">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Status" />
@@ -157,7 +188,7 @@ export const LeadsDetailedView: React.FC = () => {
                       <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
                     ))}
                     {statuses
-                      .filter(status => !statusOptions.some(opt => opt.value === status))
+                      .filter(status => !statusOptions.some(opt => opt.value === status) && status)
                       .map(status => (
                         <SelectItem key={status} value={status}>{status}</SelectItem>
                       ))
@@ -165,16 +196,29 @@ export const LeadsDetailedView: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="w-full md:w-1/2">
+              <div className="w-full md:w-1/3">
                 <Select value={interestFilter} onValueChange={setInterestFilter}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Interesse" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os Interesses</SelectItem>
-                    {interests.map(interest => (
+                    {interests.filter(Boolean).map(interest => (
                       <SelectItem key={interest} value={interest}>{interest}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full md:w-1/3">
+                <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Períodos</SelectItem>
+                    <SelectItem value="30">Últimos 30 dias</SelectItem>
+                    <SelectItem value="60">Últimos 60 dias</SelectItem>
+                    <SelectItem value="90">Últimos 90 dias</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -187,7 +231,7 @@ export const LeadsDetailedView: React.FC = () => {
                 <p>Carregando leads...</p>
               </div>
             ) : (
-              <LeadsTable leads={currentLeads} onLeadClick={handleLeadClick} />
+              <LeadsTable leads={paginatedLeads} onLeadClick={handleLeadClick} />
             )}
           </div>
 

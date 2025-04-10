@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -17,6 +17,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -46,7 +47,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Lead>>({});
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (lead) {
       setFormData({
         name: lead.name,
@@ -109,6 +110,13 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
     { value: "pausado", label: "Pausado", color: "bg-gray-50 text-gray-700 border-gray-200" }
   ];
 
+  const getStatusColor = (status?: string) => {
+    if (!status) return '';
+    
+    const option = statusOptions.find(opt => opt.value === status);
+    return option ? option.color : '';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -160,21 +168,35 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
             
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Status</Label>
-              <Select 
-                value={formData.tags || ''} 
-                onValueChange={(value) => handleChange('tags', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selecione um status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <Select 
+                  value={formData.tags || ''} 
+                  onValueChange={(value) => handleChange('tags', value)}
+                >
+                  <SelectTrigger>
+                    {formData.tags ? (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={getStatusColor(formData.tags)}>
+                          {formData.tags}
+                        </Badge>
+                      </div>
+                    ) : (
+                      <SelectValue placeholder="Selecione um status" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={option.color}>
+                            {option.label}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         )}

@@ -33,23 +33,18 @@ export const SidebarProvider = ({
   style,
 }: SidebarProviderProps) => {
   const isMobile = useIsMobile();
-  const [open, setOpen] = useState(defaultOpen);
-  const [openMobile, setOpenMobile] = useState(false);
+  const [open, setOpen] = useState(defaultOpen && !isMobile);
 
   const toggleSidebar = React.useCallback(() => {
-    return isMobile
-      ? setOpenMobile((open) => !open)
-      : setOpen((open) => !open);
-  }, [isMobile]);
+    setOpen((prev) => !prev);
+  }, []);
 
   const contextValue = React.useMemo(() => ({
     open,
     setOpen,
     isMobile,
-    openMobile,
-    setOpenMobile,
     toggleSidebar,
-  }), [open, isMobile, openMobile, toggleSidebar]);
+  }), [open, isMobile, toggleSidebar]);
 
   return (
     <SidebarContext.Provider value={contextValue}>

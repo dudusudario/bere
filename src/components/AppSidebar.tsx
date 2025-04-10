@@ -2,7 +2,8 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, MessageCircle, User, LogOut, Settings, Menu, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion';
+import { AnimatePresence } from 'motion';
+import { motion } from 'motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useSidebar } from '@/hooks/use-sidebar';
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { open, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
+  const { open, setOpen, isMobile, toggleSidebar } = useSidebar();
   
   const handleLogout = async () => {
     try {
@@ -141,21 +142,21 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setOpenMobile(!openMobile)}
+          onClick={toggleSidebar}
         >
           <Menu className="h-5 w-5" />
         </Button>
       </div>
       
       <AnimatePresence>
-        {openMobile && (
+        {isMobile && open && (
           <>
             <motion.div
               className="fixed inset-0 bg-black/50 z-50 md:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setOpenMobile(false)}
+              onClick={() => setOpen(false)}
             />
             
             <motion.div
@@ -170,7 +171,7 @@ export function AppSidebar() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setOpenMobile(false)}
+                  onClick={() => setOpen(false)}
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -189,7 +190,7 @@ export function AppSidebar() {
                       )}
                       onClick={() => {
                         navigate(item.path);
-                        setOpenMobile(false);
+                        setOpen(false);
                       }}
                     >
                       {item.icon}

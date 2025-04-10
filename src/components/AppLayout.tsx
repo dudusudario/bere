@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SidebarProvider } from '@/hooks/use-sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,13 +12,13 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
-    <SidebarProvider animate={true} className="flex min-h-screen w-full bg-background">
+    <SidebarProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar />
-          <div className="flex-1 md:ml-0 pt-[60px] md:pt-0">
+          <div className="flex-1">
             {children}
           </div>
         </div>

@@ -17,6 +17,7 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
   toggleSidebar: () => void
+  animate: boolean
 }
 
 const SidebarContext = React.createContext<SidebarContext | null>(null)
@@ -34,6 +35,7 @@ interface SidebarProviderProps {
   defaultOpen?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  animate?: boolean
   className?: string
   style?: React.CSSProperties
   children: React.ReactNode
@@ -48,6 +50,7 @@ export const SidebarProvider = React.forwardRef<
       defaultOpen = true,
       open: openProp,
       onOpenChange: setOpenProp,
+      animate = true,
       className,
       style,
       children,
@@ -113,8 +116,9 @@ export const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        animate,
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, animate]
     )
 
     return (

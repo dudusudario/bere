@@ -14,6 +14,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, X, Phone, Mail, CalendarIcon } from "lucide-react";
 import { 
   Pagination, 

@@ -142,9 +142,17 @@ export const LeadsDetailedView: React.FC = () => {
     { value: "pausado", label: "Pausado" }
   ];
 
+  const handleNewLead = () => {
+    // Placeholder for adding new lead functionality
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "A criação de novos leads será implementada em breve.",
+    });
+  };
+
   return (
     <div className="space-y-4">
-      <LeadActions />
+      <LeadActions onNewLead={handleNewLead} />
 
       <Card>
         <CardContent className="p-4">

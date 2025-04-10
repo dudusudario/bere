@@ -16,3 +16,4 @@ export { PatientActions } from './PatientActions';
 export { LeadFilters } from './LeadFilters';
 export { LeadPagination } from './LeadPagination';
 export { LeadActions } from './LeadActions';
+export { LeadDetailsDialog } from './LeadDetailsDialog';

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import { motion } from 'motion';
+import * as motion from 'motion';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/hooks/use-sidebar';
 import { menuItems } from './menu-items';

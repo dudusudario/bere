@@ -12,7 +12,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <TooltipProvider>
         <Toaster />
         <Sonner />

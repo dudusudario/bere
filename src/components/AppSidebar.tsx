@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, MessageCircle, User, LogOut, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,7 +23,8 @@ import {
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isMobile } = useSidebar();
+  const { isMobile, state, setOpen } = useSidebar();
+  const [isHovering, setIsHovering] = useState(false);
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -57,9 +58,29 @@ export function AppSidebar() {
       }
     }
   };
+  
+  // Handle mouse enter to expand the sidebar
+  const handleMouseEnter = () => {
+    if (!isMobile && state === 'collapsed') {
+      setIsHovering(true);
+      setOpen(true);
+    }
+  };
+  
+  // Handle mouse leave to collapse the sidebar
+  const handleMouseLeave = () => {
+    if (!isMobile && isHovering) {
+      setIsHovering(false);
+      setOpen(false);
+    }
+  };
 
   return (
-    <Sidebar>
+    <Sidebar 
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      collapsible="icon"
+    >
       <SidebarHeader>
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center">

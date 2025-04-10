@@ -4,14 +4,21 @@ import { useMessages, Message } from '@/hooks/useMessages';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface ChatFeedProps {
   phoneNumber?: string;
 }
 
 export const ChatFeed: React.FC<ChatFeedProps> = ({ phoneNumber }) => {
-  const { messages, isLoading } = useMessages(phoneNumber);
+  const { messages, isLoading, error } = useMessages(phoneNumber);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Erro ao carregar mensagens");
+    }
+  }, [error]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -21,7 +28,11 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({ phoneNumber }) => {
   }, [messages]);
 
   const formatTimestamp = (timestamp: string) => {
-    return format(new Date(timestamp), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+    try {
+      return format(new Date(timestamp), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+    } catch (e) {
+      return 'Data inválida';
+    }
   };
 
   const renderMessage = (message: Message) => {
@@ -42,7 +53,7 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({ phoneNumber }) => {
           <div className="text-xs font-medium mb-1">
             {isUser ? 'Você' : 'Agente'}:
           </div>
-          <div className="text-sm mb-1">{message.mensagem}</div>
+          <div className="text-sm mb-1 whitespace-pre-wrap">{message.mensagem}</div>
           <div className="text-xs opacity-70 text-right">
             {formatTimestamp(message.timestamp)}
           </div>
@@ -53,11 +64,22 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({ phoneNumber }) => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <Skeleton className="h-12 w-3/4" />
         <Skeleton className="h-12 w-2/3 ml-auto" />
         <Skeleton className="h-12 w-3/4" />
         <Skeleton className="h-12 w-2/3 ml-auto" />
+      </div>
+    );
+  }
+
+  if (!phoneNumber) {
+    return (
+      <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <p>Você precisa configurar seu número de telefone para conversar com o agente.</p>
+          <p className="text-sm mt-2">Clique no botão "Perfil" acima para configurar.</p>
+        </div>
       </div>
     );
   }

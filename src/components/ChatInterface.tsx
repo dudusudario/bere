@@ -10,13 +10,14 @@ import { Loader2, User, Phone } from 'lucide-react';
 import { Button } from './ui/button';
 import { sendToN8n } from '../utils/sendToN8n';
 import ChatFeed from './ChatFeed';
+import { toast } from 'sonner';
 
 const ChatInterface: React.FC = () => {
   const userPhone = localStorage.getItem('userPhone') || '';
   const [profileOpen, setProfileOpen] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
-  // Define a constant for webhook enabled status instead of using process.env
+  // Define a constant for webhook enabled status
   const isWebhookEnabled = true; // Set to true to enable webhook functionality
   
   const {
@@ -41,36 +42,39 @@ const ChatInterface: React.FC = () => {
         await loadMessageHistory(userPhone);
         setHistoryLoaded(true);
       } else {
-        setHistoryLoaded(true); // Marca como carregado mesmo sem telefone
+        setHistoryLoaded(true); // Mark as loaded even without a phone number
       }
     };
     
     loadHistory();
   }, [userPhone, loadMessageHistory]);
 
-  // Função para enviar mensagem com o número de telefone
+  // Function to send message with phone number
   const handleSendMessage = async (content: string) => {
     if (!userPhone) {
-      // Se não tiver telefone configurado, usa o fluxo original
-      await originalSendMessage(content, userPhone);
+      toast.error("Por favor, configure seu telefone no perfil primeiro");
       return;
     }
     
-    // Novo fluxo usando webhook para n8n
+    // Set loading state
     setSendingMessage(true);
     
-    // Primeiro registra a mensagem no sistema original para manter compatibilidade
-    await originalSendMessage(content, userPhone);
-    
     try {
-      // Depois envia para o n8n via webhook
+      // First register the message in the original system for compatibility
+      await originalSendMessage(content, userPhone);
+      
+      // Then send to n8n via webhook
       await sendToN8n({
-        username: userPhone, // Usamos o telefone como identificador de usuário
+        username: userPhone, // Use phone as user identifier
         numero: userPhone,
         mensagem: content
       });
+      
+      // Message sent successfully
+      toast.success("Mensagem enviada com sucesso");
     } catch (error) {
       console.error("Error sending message to n8n:", error);
+      toast.error("Erro ao enviar mensagem para o agente");
     } finally {
       setSendingMessage(false);
     }
@@ -109,7 +113,7 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {isWebhookEnabled ? (
-        /* Novo feed de mensagens via webhook */
+        /* New feed of messages via webhook */
         <ChatFeed phoneNumber={userPhone} />
       ) : (
         /* Feed de mensagens original */

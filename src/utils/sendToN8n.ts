@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const N8N_WEBHOOK_URL = "https://en8n.berenice.ai/webhook/c0ec8656-3e32-49ab-a5a3-33053921db0e";
 
@@ -58,9 +59,7 @@ interface SaveMessageParams {
 
 export const saveMessageToSupabase = async ({ username, numero, mensagem, origem }: SaveMessageParams): Promise<boolean> => {
   try {
-    const { supabase } = await import('@/integrations/supabase/client');
-    
-    // Use type assertion since the table isn't in TypeScript definitions
+    // Insert the message into the user_menssagens table
     const { error } = await supabase
       .from('user_menssagens' as any)
       .insert({

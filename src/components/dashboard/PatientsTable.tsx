@@ -14,9 +14,10 @@ interface Patient {
 
 interface PatientsTableProps {
   patients: Patient[];
+  onPatientClick: (patient: Patient) => void;
 }
 
-export const PatientsTable: React.FC<PatientsTableProps> = ({ patients }) => {
+export const PatientsTable: React.FC<PatientsTableProps> = ({ patients, onPatientClick }) => {
   if (patients.length === 0) {
     return (
       <div className="text-center p-6 text-muted-foreground">
@@ -52,7 +53,11 @@ export const PatientsTable: React.FC<PatientsTableProps> = ({ patients }) => {
       </TableHeader>
       <TableBody>
         {patients.map((patient) => (
-          <TableRow key={patient.id}>
+          <TableRow 
+            key={patient.id}
+            className="cursor-pointer hover:bg-muted/60"
+            onClick={() => onPatientClick(patient)}
+          >
             <TableCell className="font-medium">{patient.nome || '-'}</TableCell>
             <TableCell>{patient.whatsapp || '-'}</TableCell>
             <TableCell>{patient.email || '-'}</TableCell>

@@ -14,7 +14,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, X, Phone, Mail, CalendarIcon } from "lucide-react";
 import { 
   Pagination, 
   PaginationContent, 
@@ -27,6 +27,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
 
 // Define the patient type to match clinicorp table structure
 interface Patient {
@@ -36,16 +45,22 @@ interface Patient {
   email: string;
   status: string;
   ultima_visita?: string;
+  obs?: string;
+  procedimento?: string;
+  valor_do_orcamento?: string;
+  descricao?: string;
 }
 
 export const PatientsDetailedView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [appointmentFilter, setAppointmentFilter] = useState('');
+  const [appointmentFilter, setAppointmentFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showPatientDetails, setShowPatientDetails] = useState(false);
   const itemsPerPage = 5;
 
   // Fetch patients from Supabase
@@ -55,7 +70,7 @@ export const PatientsDetailedView: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('clinicorp')
-          .select('id, nome, whatsapp, email, status, ultima_visita');
+          .select('id, nome, whatsapp, email, status, ultima_visita, obs, procedimento, valor_do_orcamento, descricao');
 
         if (error) {
           throw error;
@@ -94,7 +109,7 @@ export const PatientsDetailedView: React.FC = () => {
       const matchesStatus = statusFilter === '' || patient.status === statusFilter;
       
       const hasNextAppointment = patient.ultima_visita && patient.ultima_visita !== '-';
-      const matchesAppointment = appointmentFilter === '' || 
+      const matchesAppointment = appointmentFilter === 'all' || 
         (appointmentFilter === 'hasAppointment' && hasNextAppointment) ||
         (appointmentFilter === 'noAppointment' && !hasNextAppointment);
       
@@ -104,6 +119,12 @@ export const PatientsDetailedView: React.FC = () => {
     setFilteredPatients(filtered);
     setCurrentPage(1); // Reset to first page when filtering
   }, [searchQuery, statusFilter, appointmentFilter, patients]);
+
+  // Handle patient click
+  const handlePatientClick = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowPatientDetails(true);
+  };
 
   // Paginate results
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -177,7 +198,10 @@ export const PatientsDetailedView: React.FC = () => {
                 <p>Carregando pacientes...</p>
               </div>
             ) : (
-              <PatientsTable patients={currentPatients} />
+              <PatientsTable 
+                patients={currentPatients} 
+                onPatientClick={handlePatientClick} 
+              />
             )}
           </div>
 
@@ -213,6 +237,100 @@ export const PatientsDetailedView: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Patient Details Dialog */}
+      <Dialog open={showPatientDetails} onOpenChange={setShowPatientDetails}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedPatient?.nome || 'Detalhes do Paciente'}</DialogTitle>
+            <DialogDescription>
+              Informações do paciente
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium">WhatsApp: {selectedPatient.whatsapp || '-'}</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium">Email: {selectedPatient.email || '-'}</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium">Última Visita: {selectedPatient.ultima_visita || '-'}</p>
+                </div>
+
+                <div className="pt-2">
+                  <h4 className="text-sm font-semibold mb-1">Status</h4>
+                  <Badge variant="outline" className={getStatusStyle(selectedPatient.status)}>
+                    {selectedPatient.status || 'Pendente'}
+                  </Badge>
+                </div>
+
+                {selectedPatient.procedimento && (
+                  <div className="pt-2">
+                    <h4 className="text-sm font-semibold mb-1">Procedimento</h4>
+                    <p className="text-sm">{selectedPatient.procedimento}</p>
+                  </div>
+                )}
+
+                {selectedPatient.valor_do_orcamento && (
+                  <div className="pt-2">
+                    <h4 className="text-sm font-semibold mb-1">Valor do Orçamento</h4>
+                    <p className="text-sm">{selectedPatient.valor_do_orcamento}</p>
+                  </div>
+                )}
+
+                {selectedPatient.obs && (
+                  <div className="pt-2">
+                    <h4 className="text-sm font-semibold mb-1">Observações</h4>
+                    <p className="text-sm">{selectedPatient.obs}</p>
+                  </div>
+                )}
+
+                {selectedPatient.descricao && (
+                  <div className="pt-2">
+                    <h4 className="text-sm font-semibold mb-1">Descrição</h4>
+                    <p className="text-sm">{selectedPatient.descricao}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="sm:justify-end">
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                Fechar
+              </Button>
+            </DialogClose>
+            <Button type="button">
+              <Calendar className="mr-2 h-4 w-4" />
+              Agendar Consulta
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+};
+
+// Helper function to get badge style based on status
+const getStatusStyle = (status: string) => {
+  switch(status?.toLowerCase()) {
+    case 'ativo':
+      return 'bg-green-50 text-green-700 border-green-200';
+    case 'pendente':
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'inativo':
+      return 'bg-gray-50 text-gray-700 border-gray-200';
+    default:
+      return 'bg-gray-50 text-gray-700 border-gray-200';
+  }
 };

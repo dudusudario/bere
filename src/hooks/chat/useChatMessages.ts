@@ -10,6 +10,15 @@ import {
   saveFavoriteStatus, 
   deleteMessageFromDb 
 } from './storage/database';
+import {
+  WEBHOOK_URL,
+  getReceivingWebhookUrl,
+  generateReceivingWebhookUrl
+} from './webhook/urls';
+import {
+  keepWebhookAlive,
+  setupMessageReceiver
+} from './webhook/receiver';
 
 export const useChatMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -21,6 +30,46 @@ export const useChatMessages = () => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
+  }, []);
+
+  // Start the webhook heartbeat and message receiver when the component mounts
+  useEffect(() => {
+    // Evitar inicialização múltipla do webhook (corrige problema de carregamentos intermitentes)
+    if (webhookInitializedRef.current) {
+      return;
+    }
+    
+    webhookInitializedRef.current = true;
+    console.log('Initializing webhook and message receiver');
+    
+    keepWebhookAlive(WEBHOOK_URL);
+    
+    // Setup message receiver from HTTP endpoint
+    const userPhone = localStorage.getItem('userPhone') || '';
+    
+    // Ensure we have a receiving webhook URL
+    let webhookUrl = getReceivingWebhookUrl();
+    if (!webhookUrl) {
+      webhookUrl = generateReceivingWebhookUrl();
+      localStorage.setItem('receivingWebhookUrl', webhookUrl);
+    }
+    
+    if (userPhone) {
+      try {
+        setupMessageReceiver(async (receivedMessage) => {
+          // Add the received message to the chat
+          await addMessage(receivedMessage, 'ai', undefined, userPhone);
+        });
+      } catch (error) {
+        console.error('Failed to setup message receiver:', error);
+        // Don't show toast here as it might be too distracting
+        // The setup will retry on next component mount
+      }
+    }
+    
+    return () => {
+      // Cleanup logic if needed
+    };
   }, []);
 
   // Delete message

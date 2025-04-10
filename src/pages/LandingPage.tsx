@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,11 +21,11 @@ const LandingPage: React.FC = () => {
   }, []);
 
   const handleAuthAction = () => {
-    if (session) {
-      navigate('/dashboard');
-    } else {
-      navigate('/auth');
-    }
+    navigate('/chat');
+  };
+
+  const handleAnonymousLogin = async () => {
+    navigate('/chat');
   };
 
   return (
@@ -42,13 +41,13 @@ const LandingPage: React.FC = () => {
             className="hidden md:flex"
             onClick={handleAuthAction}
           >
-            {session ? 'Dashboard' : 'Entrar'}
+            {session ? 'Dashboard' : 'Acessar Chat'}
           </Button>
           <Button 
             onClick={handleAuthAction}
             className="shadow-lg"
           >
-            {session ? 'Acessar Dashboard' : 'Cadastre-se'} <ArrowRight className="ml-2 h-4 w-4" />
+            Acessar Chat <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -68,15 +67,15 @@ const LandingPage: React.FC = () => {
               onClick={handleAuthAction}
               className="shadow-lg text-base"
             >
-              {session ? 'Acessar Agora' : 'Cadastre-se'}
+              Acessar Agora
             </Button>
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/chat')}
               className="text-base"
             >
-              {session ? 'Saiba Mais' : 'Entrar'}
+              Saiba Mais
             </Button>
           </div>
         </div>
@@ -159,7 +158,7 @@ const LandingPage: React.FC = () => {
             onClick={handleAuthAction}
             className="shadow-lg text-base"
           >
-            {session ? 'Acessar Agora' : 'Criar Conta'} <ArrowRight className="ml-2 h-4 w-4" />
+            Acessar Agora <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </section>

@@ -1,241 +1,382 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/components/AuthProvider';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { toast } from '@/components/ui/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Email inválido' }),
+  password: z.string().min(6, { message: 'Senha deve ter pelo menos 6 caracteres' }),
+});
+
+const registerSchema = z.object({
+  name: z.string().min(2, { message: 'Nome deve ter pelo menos 2 caracteres' }),
+  email: z.string().email({ message: 'Email inválido' }),
+  password: z.string().min(6, { message: 'Senha deve ter pelo menos 6 caracteres' }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Auth: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      navigate('/chat');
-    }
-  }, [user, navigate]);
+    // Check for existing session on component mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        navigate('/chat');
+      }
+    });
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: '',
-          }
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth event:", event);
+        console.log("Session:", session);
+        setSession(session);
+        if (session) {
+          navigate('/chat');
         }
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Cadastro realizado com sucesso!',
-        description: 'Verifique seu email para confirmar o cadastro.',
-      });
-      
-      // Para fins de teste, poderíamos redirecionar diretamente,
-      // mas em produção, devemos esperar pela confirmação de email
-      setActiveTab('login');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro no cadastro',
-        description: error.message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      }
+    );
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const registerForm = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+    },
+  });
+
+  const onLoginSubmit = async (values: LoginFormValues) => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      console.log("Attempting login with email:", values.email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: values.email,
+        password: values.password,
       });
-      
-      if (error) throw error;
-      
-      navigate('/chat');
-    } catch (error: any) {
+
+      if (error) {
+        console.error('Login error:', error);
+        let errorMessage = 'Ocorreu um erro. Tente novamente.';
+        
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Email não confirmado. Por favor, verifique sua caixa de entrada.';
+          
+          // Store the email for the confirmation page
+          localStorage.setItem('pendingConfirmationEmail', values.email);
+          
+          // Redirect to email confirmation page
+          navigate('/email-confirmation');
+          return;
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: 'Erro no login',
+          description: errorMessage,
+        });
+        throw error;
+      }
+
+      console.log("Login successful:", data);
       toast({
-        variant: 'destructive',
-        title: 'Erro no login',
-        description: error.message,
+        title: 'Login bem-sucedido',
+        description: 'Bem-vindo de volta!',
       });
+      
+      // Navegação é feita automaticamente pelo listener de autenticação
+    } catch (error) {
+      console.error('Login error:', error);
+      // Mensagem de erro já exibida no bloco de tratamento acima
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const onRegisterSubmit = async (values: RegisterFormValues) => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      console.log("Attempting registration with email:", values.email);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.name,
+          },
+        }
+      });
+
+      if (error) {
+        console.error('Registration error:', error);
+        let errorMessage = 'Ocorreu um erro. Tente novamente.';
+        
+        if (error.message.includes('User already registered')) {
+          errorMessage = 'Este email já está registrado. Tente fazer login.';
+          setActiveTab('login');
+        } else if (error.message.includes('password')) {
+          errorMessage = 'A senha não atende aos requisitos mínimos de segurança.';
+        } else if (error.message.includes('validation')) {
+          errorMessage = 'Formato de email inválido.';
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: 'Erro no registro',
+          description: errorMessage,
+        });
+        throw error;
+      }
+
+      console.log("Registration response:", data);
+      
+      if (data.user?.identities?.length === 0) {
+        toast({
+          title: 'Email já cadastrado',
+          description: 'Você já tem uma conta. Tente fazer login.',
+        });
+        setActiveTab('login');
+      } else {
+        // Store the email for confirmation page
+        localStorage.setItem('pendingConfirmationEmail', values.email);
+        
+        toast({
+          title: 'Registro bem-sucedido',
+          description: 'Sua conta foi criada! Verifique seu email para confirmar o cadastro.',
+        });
+        
+        // Redirect user to email confirmation page
+        navigate('/email-confirmation');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Mensagem de erro já exibida no bloco de tratamento acima
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      console.log("Iniciando processo de login com Google...");
+      
+      // Usar a URL atual para determinar o redirecionamento
+      const currentOrigin = window.location.origin;
+      const redirectTo = `${currentOrigin}/chat`;
+      console.log("URL de redirecionamento:", redirectTo);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/chat`
+          redirectTo: redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Google login error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro no login com Google',
+          description: error.message || 'Ocorreu um erro. Tente novamente.',
+        });
+        throw error;
+      }
       
-    } catch (error: any) {
+      console.log("Google login initiated:", data);
+    } catch (error) {
+      console.error('Google login error:', error);
       toast({
         variant: 'destructive',
         title: 'Erro no login com Google',
-        description: error.message,
+        description: 'Ocorreu um erro ao conectar com o Google. Verifique sua conexão ou tente novamente mais tarde.',
       });
-      setLoading(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="absolute top-4 left-4">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/')}
-          className="flex items-center gap-1"
-        >
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 p-4">
+      <Button 
+        variant="ghost" 
+        className="absolute top-4 left-4 flex items-center" 
+        onClick={() => navigate('/')}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+      </Button>
       
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold tracking-tight">Bem-vindo!</CardTitle>
-          <CardDescription>
-            Entre ou crie sua conta para continuar
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Cadastro</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Senha</Label>
-                    {/* TO-DO: Implementar recuperação de senha */}
-                    <Button variant="link" className="px-0" type="button">
-                      Esqueceu a senha?
+      <div className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-primary">Berenice</h1>
+          <p className="text-muted-foreground">Sua assistente pessoal inteligente</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Bem-vindo(a)</CardTitle>
+            <CardDescription>Faça login ou crie sua conta para continuar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleGoogleLogin} 
+                disabled={isLoading} 
+                className="w-full flex items-center justify-center"
+              >
+                <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                  <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+                </svg>
+                {isLoading ? 'Conectando...' : 'Continuar com Google'}
+              </Button>
+            </div>
+
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            <Tabs 
+              defaultValue="login" 
+              value={activeTab} 
+              onValueChange={setActiveTab} 
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Cadastro</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="login" className="mt-4">
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="seu@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="******" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? 'Entrando...' : 'Entrar'}
                     </Button>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="register">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Senha</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Criando conta..." : "Criar conta"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-          
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Ou continue com
-              </span>
-            </div>
-          </div>
-          
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full flex gap-2 items-center justify-center"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15.5453 8.12698C15.5453 7.54206 15.4975 6.96825 15.3941 6.40873H8.13965V9.35317H12.2956C12.1208 10.3038 11.5757 11.1328 10.7786 11.6587V13.5683H13.3031C14.7646 12.2143 15.5453 10.3437 15.5453 8.12698Z" fill="#4285F4"/>
-              <path d="M8.13965 16C10.2563 16 12.0531 15.2851 13.3057 13.5683L10.7812 11.6587C10.0876 12.1328 9.19584 12.3969 8.14197 12.3969C6.09298 12.3969 4.35361 11.0349 3.74409 9.19841H1.14258V11.1619C2.4233 14.1233 5.23242 16 8.13965 16Z" fill="#34A853"/>
-              <path d="M3.74177 9.19841C3.40222 8.24127 3.40222 7.20106 3.74177 6.24391V4.28042H1.14258C-0.10799 6.47407 -0.10799 8.96825 1.14258 11.1619L3.74177 9.19841Z" fill="#FBBC05"/>
-              <path d="M8.13965 3.60314C9.26769 3.58862 10.3562 4.02469 11.183 4.81693L13.4221 2.57778C11.9886 1.23175 10.0945 0.504989 8.13965 0.523804C5.23242 0.523804 2.4233 2.40053 1.14258 5.36243L3.74177 7.32593C4.34896 5.4873 6.09066 4.12698 8.13965 4.12698V3.60314Z" fill="#EA4335"/>
-            </svg>
-            Google
-          </Button>
-        </CardContent>
-      </Card>
+                  </form>
+                </Form>
+              </TabsContent>
+
+              <TabsContent value="register" className="mt-4">
+                <Form {...registerForm}>
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                    <FormField
+                      control={registerForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Seu nome" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={registerForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="seu@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={registerForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="******" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? 'Criando conta...' : 'Criar conta'}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

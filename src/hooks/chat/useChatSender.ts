@@ -2,6 +2,7 @@
 import { useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { FilePreview } from './types';
+import { WEBHOOK_URL } from './webhook/urls';
 import { parseResponse } from './message/formatter';
 
 interface UseChatSenderProps {
@@ -13,7 +14,7 @@ interface UseChatSenderProps {
 export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChatSenderProps) => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Send message with improved stability
+  // Send message to webhook with improved stability
   const sendMessage = useCallback(async (content: string, phoneNumber: string) => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
@@ -29,20 +30,35 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
       abortControllerRef.current = controller;
       const signal = controller.signal;
       
-      console.log(`Enviando mensagem`);
+      const formData = new FormData();
+      formData.append('telefone', phoneNumber);
+      formData.append('mensagem', content);
       
-      // Simulação de resposta - em um cenário real, isso viria de uma API
-      const responseText = "Esta é uma mensagem de resposta simulada.";
+      selectedFiles.forEach(filePreview => {
+        formData.append('file', filePreview.file);
+      });
+      
+      console.log(`Enviando mensagem para webhook ${WEBHOOK_URL}`);
+      
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        body: formData,
+        signal
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erro na requisição: ${response.status}`);
+      }
+      
+      // First try to get response as text
+      const responseText = await response.text();
       console.log('Resposta recebida:', responseText);
       
       // Parse the response to extract clean message text
       const parsedMessage = parseResponse(responseText);
       console.log('Mensagem parseada:', parsedMessage);
       
-      // Add the message to the chat
-      if (parsedMessage && parsedMessage.trim()) {
-        await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
-      }
+      await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
     } catch (error) {
       console.error('Error sending message:', error);
       

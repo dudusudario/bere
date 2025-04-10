@@ -5,29 +5,32 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "./components/AppLayout";
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
-import Auth from "./pages/Auth";
-import Login from "./pages/Login";
-import { AuthProvider } from "./components/AuthProvider";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const queryClient = new QueryClient();
+  const [session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      await supabase.auth.getSession();
+    const fetchSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
       setIsLoading(false);
     };
-    
-    checkSession();
+
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (isLoading) {
@@ -41,43 +44,24 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/chat" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Index />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <UserProfile />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <ProtectedRoute adminOnly>
-                <AdminPanel />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile-setup" element={<ProfileSetup />} />
-            <Route path="/email-confirmation" element={<EmailConfirmation />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/chat" element={
+            <AppLayout>
+              <Index />
+            </AppLayout>
+          } />
+          <Route path="/profile" element={
+            <AppLayout>
+              <UserProfile />
+            </AppLayout>
+          } />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/email-confirmation" element={<EmailConfirmation />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -94,7 +94,7 @@ export const LeadsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os Status</SelectItem>
+                    <SelectItem value="all">Todos os Status</SelectItem>
                     {statuses.map(status => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
@@ -107,7 +107,7 @@ export const LeadsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Interesse" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os Interesses</SelectItem>
+                    <SelectItem value="all">Todos os Interesses</SelectItem>
                     {interests.map(interest => (
                       <SelectItem key={interest} value={interest}>{interest}</SelectItem>
                     ))}

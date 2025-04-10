@@ -103,7 +103,7 @@ export const PatientsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os Status</SelectItem>
+                    <SelectItem value="all">Todos os Status</SelectItem>
                     {statuses.map(status => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
@@ -113,7 +113,7 @@ export const PatientsDetailedView: React.FC = () => {
               <div className="w-full md:w-1/2">
                 <RadioGroup className="flex space-x-4" value={appointmentFilter} onValueChange={setAppointmentFilter}>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="" id="all" />
+                    <RadioGroupItem value="all" id="all" />
                     <Label htmlFor="all">Todos</Label>
                   </div>
                   <div className="flex items-center space-x-2">

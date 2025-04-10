@@ -19,6 +19,10 @@ export const sendToN8n = async ({ username, numero, mensagem }: SendMessageParam
       return false;
     }
 
+    // Obter o timestamp formatado corretamente
+    const timestamp = getCurrentTimestampWithTimezone();
+    console.log(`Enviando mensagem com timestamp: ${timestamp}`);
+
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: {
@@ -28,7 +32,7 @@ export const sendToN8n = async ({ username, numero, mensagem }: SendMessageParam
         user: username,
         numero,
         mensagem,
-        timestamp: getCurrentTimestampWithTimezone() // Adiciona timestamp no formato correto
+        timestamp // Adiciona timestamp no formato correto
       }),
     });
 

@@ -1,3 +1,4 @@
+
 import { getReceivingWebhookUrl } from './urls';
 
 // Configura um servidor para receber mensagens via HTTP POST
@@ -5,46 +6,18 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
   const receivingWebhookUrl = getReceivingWebhookUrl();
   
   if (!receivingWebhookUrl) {
-    console.log('Receiving webhook URL not configured, skipping setup');
+    console.error('Erro: URL de recebimento de webhook não configurada');
     return;
   }
   
-  console.log('Setting up message receiver for URL:', receivingWebhookUrl);
-  
-  // Define the polling function at the beginning of the scope
-  const startPolling = () => {
-    // Add a message handler for incoming webhook messages
-    window.addEventListener('message', (event) => {
-      // Handle messages sent to the window
-      if (event.data && event.data.type === 'webhook_message') {
-        console.log('Received webhook message:', event.data.message);
-        onMessageReceived(event.data.message);
-      }
-    });
-    
-    // Implementa um servidor simples para receber mensagens POST
-    const handleDirectMessage = async (url: string) => {
-      try {
-        // Simular um endpoint POST que pode receber mensagens via fetch
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          // Configure service worker to handle POST requests to our webhook URL
-          navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'webhook_post' && event.data.message) {
-              console.log('Received webhook POST message via service worker:', event.data.message);
-              onMessageReceived(event.data.message);
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Error setting up POST handler:', err);
-      }
-    };
+  console.log('Configurando receptor de mensagens para URL:', receivingWebhookUrl);
 
-    // Iniciar o processamento de mensagens diretas
-    handleDirectMessage(receivingWebhookUrl);
+  // Define a polling function that will check for new messages
+  const pollForMessages = () => {
+    // Simular recebimento de mensagens via polling (apenas para desenvolvimento)
+    console.log('Verificando por novas mensagens em:', receivingWebhookUrl);
     
-    const pollInterval = setInterval(() => {
-      // Use the fetch API to poll the webhook endpoint
+    try {
       fetch(receivingWebhookUrl, {
         method: "GET",
         headers: {
@@ -53,62 +26,110 @@ export const setupMessageReceiver = (onMessageReceived: (message: string) => voi
           "Expires": "0"
         }
       })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+      .then(response => {
+        if (!response.ok) {
+          if (response.status !== 404) { // Ignorar 404 já que é esperado quando não há mensagens
+            console.debug(`Erro HTTP ao verificar mensagens: ${response.status}`);
           }
-          return response.text();
-        })
-        .then(data => {
+          return null;
+        }
+        return response.text();
+      })
+      .then(data => {
+        if (data && typeof data === 'string' && data.trim()) {
           try {
-            // Try to parse as JSON first
+            // Tentar analisar como JSON
             const jsonData = JSON.parse(data);
             if (jsonData && jsonData.message) {
-              console.log('Received webhook message via polling:', jsonData.message);
+              console.log('Mensagem recebida via polling:', jsonData.message);
               onMessageReceived(jsonData.message);
             }
           } catch (e) {
-            // If it's not valid JSON, check if it's a raw message
-            if (data && typeof data === 'string' && data.trim()) {
-              console.log('Received raw webhook message:', data);
-              onMessageReceived(data);
-            }
+            // Se não for JSON válido, tratar como mensagem direta
+            console.log('Mensagem de texto recebida:', data);
+            onMessageReceived(data);
           }
-        })
-        .catch(error => {
-          // Log the error but don't spam the console
-          console.debug('Polling error (this is normal if the endpoint is not yet available):', error);
-        });
-    }, 3000); // Poll every 3 seconds (mais frequente para evitar timeouts)
-    
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-      clearInterval(pollInterval);
-    });
-    
-    return pollInterval;
+        }
+      })
+      .catch(error => {
+        // Log o erro, mas não spam o console
+        console.debug('Erro de polling (normal se o endpoint ainda não estiver disponível):', error);
+      });
+    } catch (err) {
+      console.error('Erro ao fazer polling para novas mensagens:', err);
+    }
+  };
+
+  // Create a WebSocket connection if supported
+  const setupWebSocket = () => {
+    try {
+      // Tentativa de criar WebSocket (se a URL for compatível)
+      if (receivingWebhookUrl.startsWith('ws://') || receivingWebhookUrl.startsWith('wss://')) {
+        const ws = new WebSocket(receivingWebhookUrl);
+        
+        ws.onopen = () => {
+          console.log('Conexão WebSocket estabelecida');
+        };
+        
+        ws.onmessage = (event) => {
+          console.log('Mensagem recebida via WebSocket:', event.data);
+          try {
+            const data = JSON.parse(event.data);
+            if (data && data.message) {
+              onMessageReceived(data.message);
+            } else {
+              onMessageReceived(event.data);
+            }
+          } catch (e) {
+            onMessageReceived(event.data);
+          }
+        };
+        
+        ws.onerror = (error) => {
+          console.error('Erro na conexão WebSocket:', error);
+          // Fallback para polling
+          setInterval(pollForMessages, 3000);
+        };
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Erro ao configurar WebSocket:', error);
+      return false;
+    }
   };
   
-  // Create a simple server-sent events listener
-  try {
-    // Register an endpoint handler in the service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(registration => {
-        console.log('Service worker ready, setting up message handler');
-        
-        // We'll use a simple polling mechanism instead since service workers
-        // might not be fully supported in all environments
-        startPolling();
-      });
-    } else {
-      // Fallback to polling if service worker is not available
-      startPolling();
+  // Setup a message listener for window events from postMessage
+  window.addEventListener('message', (event) => {
+    // Handle messages sent to the window
+    if (event.data && event.data.type === 'webhook_message') {
+      console.log('Mensagem de webhook recebida via postMessage:', event.data.message);
+      onMessageReceived(event.data.message);
     }
-  } catch (err) {
-    console.error('Error setting up message receiver:', err);
-    // Fallback to polling
-    startPolling();
-  }
+  });
+
+  // Processo principal para receber mensagens
+  const setupReceiver = async () => {
+    // Tenta configurar WebSocket primeiro
+    const wsSuccess = setupWebSocket();
+    
+    if (!wsSuccess) {
+      console.log('WebSocket não disponível, usando polling HTTP');
+      
+      // Usar polling como fallback
+      const pollingInterval = setInterval(pollForMessages, 3000);
+      
+      // Limpar intervalo quando a página for fechada
+      window.addEventListener('beforeunload', () => {
+        clearInterval(pollingInterval);
+      });
+    }
+  };
+  
+  // Iniciar o receptor
+  setupReceiver();
 };
 
 // Função para manter o webhook ativo
@@ -124,7 +145,7 @@ export const keepWebhookAlive = (webhookUrl: string): void => {
       console.log('Heartbeat falhou, reconectando webhook...');
       // Tentar reconectar se o heartbeat falhar
     });
-  }, 30000); // Envia heartbeat a cada 30 segundos (mais frequente)
+  }, 30000); // Envia heartbeat a cada 30 segundos
   
   // Limpar o intervalo quando a janela for fechada
   window.addEventListener('beforeunload', () => {

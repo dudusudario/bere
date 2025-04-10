@@ -6,7 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from 'sonner';
-import { Settings, Copy, Check, Globe, Send, Webhook, ArrowRight, ExternalLink, RefreshCw } from 'lucide-react';
+import { 
+  Settings, Copy, Check, Globe, Send, Webhook, ArrowRight, 
+  ExternalLink, RefreshCw, Code, AlertTriangle 
+} from 'lucide-react';
 import { 
   getReceivingWebhookUrl, 
   saveReceivingWebhookUrl, 
@@ -19,6 +22,8 @@ const WebhookConfig: React.FC = () => {
   const [receivingWebhookUrl, setReceivingWebhookUrl] = useState(getReceivingWebhookUrl());
   const [copied, setCopied] = useState(false);
   const [testingReceiving, setTestingReceiving] = useState(false);
+  const [webhookAccessible, setWebhookAccessible] = useState<boolean | null>(null);
+  const [testingWebhookAccess, setTestingWebhookAccess] = useState(false);
 
   // Gerar URL automaticamente se não existir
   useEffect(() => {
@@ -55,25 +60,70 @@ const WebhookConfig: React.FC = () => {
   const testReceiveWebhook = async () => {
     setTestingReceiving(true);
     try {
-      // Simulação de recebimento de mensagem
+      // Simular o recebimento de uma mensagem
+      const testMessage = {
+        message: "Esta é uma mensagem de teste do webhook. Se você está vendo isso, a configuração está funcionando corretamente!",
+        sender: "ai",
+        timestamp: new Date().toISOString()
+      };
+      
+      // Usando fetch para enviar uma solicitação POST para o webhook
       const response = await fetch(receivingWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: "Esta é uma mensagem de teste do webhook. Se você está vendo isso, a configuração está funcionando corretamente!",
-          sender: "ai",
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify(testMessage),
       });
       
-      toast.success("Mensagem de teste enviada com sucesso! Verifique o chat para ver se a mensagem aparece.");
+      if (response.ok) {
+        toast.success("Mensagem de teste POST enviada com sucesso! Verifique o chat para ver se a mensagem aparece.");
+      } else {
+        toast.error(`Erro ao enviar mensagem POST: ${response.status} ${response.statusText}`);
+      }
     } catch (error) {
       console.error("Erro ao testar webhook:", error);
-      toast.error("Erro ao testar webhook de recebimento. Verifique se a URL está correta.");
+      toast.error("Erro ao testar webhook de recebimento. Verifique se a URL está acessível publicamente.");
     } finally {
       setTestingReceiving(false);
+    }
+  };
+  
+  // Testar se o webhook está acessível
+  const testWebhookAccessibility = async () => {
+    setTestingWebhookAccess(true);
+    setWebhookAccessible(null);
+    
+    try {
+      // Tentar acessar o webhook para ver se está disponível publicamente
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(receivingWebhookUrl, {
+        method: 'HEAD',
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        setWebhookAccessible(true);
+        toast.success("Webhook está acessível publicamente!");
+      } else {
+        setWebhookAccessible(false);
+        toast.error(`Webhook não está respondendo corretamente: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error("Erro ao testar acessibilidade do webhook:", error);
+      setWebhookAccessible(false);
+      
+      if (error instanceof DOMException && error.name === "AbortError") {
+        toast.error("Tempo esgotado ao tentar acessar o webhook. O endpoint pode não estar publicamente disponível.");
+      } else {
+        toast.error("O webhook não parece estar acessível publicamente. Verifique se o serviço está disponível.");
+      }
+    } finally {
+      setTestingWebhookAccess(false);
     }
   };
 
@@ -87,6 +137,21 @@ const WebhookConfig: React.FC = () => {
           Você precisará copiar a URL de recebimento e configurá-la no N8N.
         </AlertDescription>
       </Alert>
+      
+      {webhookAccessible === false && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-5 w-5" />
+          <AlertTitle>Webhook não acessível</AlertTitle>
+          <AlertDescription>
+            O webhook não parece estar acessível publicamente. Para receber mensagens, você precisa:
+            <ul className="list-disc ml-6 mt-2 space-y-1">
+              <li>Publicar a API em um serviço como Vercel, Netlify, ou similar</li>
+              <li>Garantir que a URL seja acessível publicamente</li>
+              <li>Configurar o endpoint para aceitar solicitações POST</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Card>
         <CardHeader>
@@ -147,6 +212,36 @@ const WebhookConfig: React.FC = () => {
                 <RefreshCw className="h-4 w-4 mr-2" /> Gerar URL
               </Button>
             </div>
+            
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md p-3 mt-3">
+              <h4 className="font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                <AlertTriangle className="h-4 w-4" /> Importante: Esta URL deve estar publicamente acessível!
+              </h4>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                Para receber mensagens, garanta que esta URL esteja publicada e acessível na internet. Use serviços
+                como Vercel, Netlify ou similares para hospedar seu endpoint de webhook.
+              </p>
+            </div>
+            
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={testWebhookAccessibility}
+                disabled={testingWebhookAccess}
+              >
+                {testingWebhookAccess ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Testando acessibilidade...
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-4 w-4 mr-2" /> Verificar acessibilidade do webhook
+                  </>
+                )}
+              </Button>
+            </div>
+            
             <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-3 mt-3">
               <h4 className="font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
                 <ArrowRight className="h-4 w-4" /> O que fazer com esta URL:
@@ -155,6 +250,25 @@ const WebhookConfig: React.FC = () => {
                 <span className="font-semibold">IMPORTANTE:</span> Copie esta URL e configure-a no N8N como o endpoint 
                 para onde as respostas devem ser enviadas.
               </p>
+            </div>
+            
+            <div className="bg-gray-50 dark:bg-gray-900/30 border border-gray-200 dark:border-gray-800 rounded-md p-3 mt-3">
+              <h4 className="font-medium flex items-center gap-1">
+                <Code className="h-4 w-4" /> Exemplo de código para enviar mensagens para o webhook (POST):
+              </h4>
+              <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-2 mt-2 rounded overflow-x-auto">
+{`fetch("${receivingWebhookUrl}", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    message: "Sua mensagem aqui",
+    sender: "ai",
+    timestamp: "${new Date().toISOString()}"
+  })
+})`}
+              </pre>
             </div>
           </div>
         </CardContent>
@@ -173,7 +287,7 @@ const WebhookConfig: React.FC = () => {
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Testar Recebimento
+                Testar Recebimento (POST)
               </>
             )}
           </Button>
@@ -212,7 +326,7 @@ const WebhookConfig: React.FC = () => {
 {`{
   "message": "Conteúdo da mensagem a ser exibida no chat",
   "sender": "ai",
-  "timestamp": "2023-04-08T14:30:00Z"
+  "timestamp": "2025-04-10T00:12:13.187-03:00"
 }`}
               </pre>
               <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-3 mt-3">

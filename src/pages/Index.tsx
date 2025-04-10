@@ -7,7 +7,8 @@ import {
   DashboardCharts, 
   RecentActivity, 
   DashboardHeader,
-  EmptyTabContent
+  EmptyTabContent,
+  PatientsDetailedView
 } from '@/components/dashboard';
 
 const Index: React.FC = () => {
@@ -97,7 +98,7 @@ const Index: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="patients">
-            <EmptyTabContent title="Pacientes" />
+            <PatientsDetailedView />
           </TabsContent>
         </Tabs>
       </main>

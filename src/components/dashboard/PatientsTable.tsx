@@ -5,11 +5,11 @@ import { Badge } from "@/components/ui/badge";
 
 interface Patient {
   id: number;
-  name: string;
-  phone: string;
+  nome: string;
+  whatsapp: string;
+  email: string;
   status: string;
-  lastAppointment?: string;
-  nextAppointment?: string;
+  ultima_visita?: string;
 }
 
 interface PatientsTableProps {
@@ -25,34 +25,43 @@ export const PatientsTable: React.FC<PatientsTableProps> = ({ patients }) => {
     );
   }
 
+  // Helper function to get badge style based on status
+  const getStatusStyle = (status: string) => {
+    switch(status?.toLowerCase()) {
+      case 'ativo':
+        return 'bg-green-50 text-green-700 border-green-200';
+      case 'pendente':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'inativo':
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Nome</TableHead>
           <TableHead>Telefone</TableHead>
+          <TableHead>Email</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Última Consulta</TableHead>
-          <TableHead>Próxima Consulta</TableHead>
+          <TableHead>Última Visita</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {patients.map((patient) => (
           <TableRow key={patient.id}>
-            <TableCell className="font-medium">{patient.name}</TableCell>
-            <TableCell>{patient.phone}</TableCell>
+            <TableCell className="font-medium">{patient.nome || '-'}</TableCell>
+            <TableCell>{patient.whatsapp || '-'}</TableCell>
+            <TableCell>{patient.email || '-'}</TableCell>
             <TableCell>
-              <Badge variant="outline" className={
-                patient.status === 'Ativo' ? 'bg-green-50 text-green-700 border-green-200' :
-                patient.status === 'Pendente' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                patient.status === 'Inativo' ? 'bg-gray-50 text-gray-700 border-gray-200' :
-                'bg-gray-50 text-gray-700 border-gray-200'
-              }>
-                {patient.status}
+              <Badge variant="outline" className={getStatusStyle(patient.status)}>
+                {patient.status || 'Pendente'}
               </Badge>
             </TableCell>
-            <TableCell>{patient.lastAppointment || '-'}</TableCell>
-            <TableCell>{patient.nextAppointment || '-'}</TableCell>
+            <TableCell>{patient.ultima_visita || '-'}</TableCell>
           </TableRow>
         ))}
       </TableBody>

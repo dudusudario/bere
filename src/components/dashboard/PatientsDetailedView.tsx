@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchInput } from './SearchInput';
 import { PatientsTable } from './PatientsTable';
 import { 
@@ -25,43 +25,85 @@ import {
 } from "@/components/ui/pagination";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
-// Sample patients data
-const allPatients = [
-  { id: 1, name: 'Roberto Oliveira', phone: '(11) 97777-8888', status: 'Ativo', lastAppointment: '05/04/2025', nextAppointment: '12/05/2025' },
-  { id: 2, name: 'Carla Mendes', phone: '(21) 96666-5555', status: 'Ativo', lastAppointment: '01/04/2025', nextAppointment: '30/04/2025' },
-  { id: 3, name: 'Paulo Souza', phone: '(31) 95555-4444', status: 'Pendente', lastAppointment: '25/03/2025', nextAppointment: '15/04/2025' },
-  { id: 4, name: 'Luciana Ferreira', phone: '(41) 94444-3333', status: 'Inativo', lastAppointment: '10/02/2025', nextAppointment: '-' },
-  { id: 5, name: 'Marcelo Castro', phone: '(51) 93333-2222', status: 'Ativo', lastAppointment: '02/04/2025', nextAppointment: '02/05/2025' },
-  { id: 6, name: 'Julia Ribeiro', phone: '(11) 92222-1111', status: 'Ativo', lastAppointment: '03/04/2025', nextAppointment: '17/04/2025' },
-  { id: 7, name: 'Fernando Gomes', phone: '(21) 91111-0000', status: 'Pendente', lastAppointment: '27/03/2025', nextAppointment: '20/04/2025' },
-  { id: 8, name: 'Camila Alves', phone: '(31) 90000-9999', status: 'Inativo', lastAppointment: '05/01/2025', nextAppointment: '-' },
-  { id: 9, name: 'Ricardo Santos', phone: '(41) 99999-8888', status: 'Ativo', lastAppointment: '04/04/2025', nextAppointment: '04/05/2025' },
-  { id: 10, name: 'Mariana Costa', phone: '(51) 98888-7777', status: 'Ativo', lastAppointment: '01/04/2025', nextAppointment: '15/04/2025' }
-];
+// Define the patient type to match clinicorp table structure
+interface Patient {
+  id: number;
+  nome: string;
+  whatsapp: string;
+  email: string;
+  status: string;
+  ultima_visita?: string;
+}
 
 export const PatientsDetailedView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [appointmentFilter, setAppointmentFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const itemsPerPage = 5;
 
+  // Fetch patients from Supabase
+  useEffect(() => {
+    const fetchPatients = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('clinicorp')
+          .select('id, nome, whatsapp, email, status, ultima_visita');
+
+        if (error) {
+          throw error;
+        }
+
+        // Map data to Patient type and format values
+        const formattedData = data.map(patient => ({
+          ...patient,
+          status: patient.status || 'Pendente', // Default status if not present
+        }));
+
+        setPatients(formattedData);
+        setFilteredPatients(formattedData);
+      } catch (error) {
+        console.error('Error fetching patients:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao buscar pacientes',
+          description: 'Não foi possível carregar os dados dos pacientes.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, []);
+
   // Filter patients based on search query and filters
-  const filteredPatients = allPatients.filter(patient => {
-    const matchesSearch = 
-      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      patient.phone.includes(searchQuery);
-    
-    const matchesStatus = statusFilter === '' || patient.status === statusFilter;
-    
-    const hasNextAppointment = patient.nextAppointment && patient.nextAppointment !== '-';
-    const matchesAppointment = appointmentFilter === '' || 
-      (appointmentFilter === 'hasAppointment' && hasNextAppointment) ||
-      (appointmentFilter === 'noAppointment' && !hasNextAppointment);
-    
-    return matchesSearch && matchesStatus && matchesAppointment;
-  });
+  useEffect(() => {
+    const filtered = patients.filter(patient => {
+      const matchesSearch = 
+        (patient.nome?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+        (patient.whatsapp?.includes(searchQuery) || false);
+      
+      const matchesStatus = statusFilter === '' || patient.status === statusFilter;
+      
+      const hasNextAppointment = patient.ultima_visita && patient.ultima_visita !== '-';
+      const matchesAppointment = appointmentFilter === '' || 
+        (appointmentFilter === 'hasAppointment' && hasNextAppointment) ||
+        (appointmentFilter === 'noAppointment' && !hasNextAppointment);
+      
+      return matchesSearch && matchesStatus && matchesAppointment;
+    });
+
+    setFilteredPatients(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
+  }, [searchQuery, statusFilter, appointmentFilter, patients]);
 
   // Paginate results
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -70,7 +112,7 @@ export const PatientsDetailedView: React.FC = () => {
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
 
   // Get unique statuses for filter options
-  const statuses = [...new Set(allPatients.map(patient => patient.status))];
+  const statuses = [...new Set(patients.map(patient => patient.status).filter(Boolean))];
 
   return (
     <div className="space-y-4">
@@ -103,7 +145,7 @@ export const PatientsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="">Todos os Status</SelectItem>
                     {statuses.map(status => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
@@ -113,7 +155,7 @@ export const PatientsDetailedView: React.FC = () => {
               <div className="w-full md:w-1/2">
                 <RadioGroup className="flex space-x-4" value={appointmentFilter} onValueChange={setAppointmentFilter}>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="all" />
+                    <RadioGroupItem value="" id="all" />
                     <Label htmlFor="all">Todos</Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -130,7 +172,13 @@ export const PatientsDetailedView: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-md border shadow-sm overflow-hidden">
-            <PatientsTable patients={currentPatients} />
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <p>Carregando pacientes...</p>
+              </div>
+            ) : (
+              <PatientsTable patients={currentPatients} />
+            )}
           </div>
 
           {filteredPatients.length > itemsPerPage && (

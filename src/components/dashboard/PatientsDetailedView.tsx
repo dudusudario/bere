@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
@@ -107,6 +108,40 @@ export const PatientsDetailedView: React.FC = () => {
   // Get unique statuses for filter options
   const statuses = [...new Set(patients.map(patient => patient.status).filter(Boolean))];
 
+  // Handle dialog close and patient update
+  const handleDialogClose = (open: boolean) => {
+    setShowPatientDetails(open);
+    
+    // If dialog is closing, refresh patient data to reflect status changes
+    if (!open) {
+      const fetchPatients = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('clinicorp')
+            .select('id, nome, whatsapp, email, status, ultima_visita, obs, procedimento, valor_do_orcamento, descricao')
+            .order('id', { ascending: false })
+            .limit(5);
+
+          if (error) {
+            throw error;
+          }
+
+          // Update patient data to reflect changes
+          const formattedData = data.map(patient => ({
+            ...patient,
+            status: patient.status || 'Pendente',
+          }));
+
+          setPatients(formattedData);
+        } catch (error) {
+          console.error('Error refreshing patient data:', error);
+        }
+      };
+
+      fetchPatients();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -152,7 +187,7 @@ export const PatientsDetailedView: React.FC = () => {
       <PatientDetailsDialog 
         patient={selectedPatient}
         open={showPatientDetails}
-        onOpenChange={setShowPatientDetails}
+        onOpenChange={handleDialogClose}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { useMessages, Message } from '@/hooks/useMessages';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,8 +16,14 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({ phoneNumber }) => {
   useEffect(() => {
     if (error) {
       toast.error("Erro ao carregar mensagens");
+      console.error("Erro ao carregar mensagens:", error);
     }
   }, [error]);
+
+  // Log para debug
+  useEffect(() => {
+    console.log("ChatFeed mensagens recebidas:", messages.length, messages);
+  }, [messages]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {

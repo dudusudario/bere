@@ -1,6 +1,4 @@
 
-import { getReceivingWebhookUrl } from './urls';
-
 // Configura um servidor para receber mensagens via HTTP POST
 export const setupMessageReceiver = (onMessageReceived: (message: string) => void): void => {
   // Como removemos o webhook de recebimento, essa função não faz nada

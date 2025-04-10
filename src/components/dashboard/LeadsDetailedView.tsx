@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchInput } from './SearchInput';
 import { LeadsTable } from './LeadsTable';
 import { 
@@ -23,50 +23,88 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
-// Sample leads data
-const allLeads = [
-  { id: 1, name: 'Maria Silva', phone: '(11) 98765-4321', status: 'Novo', interest: 'Ortodontia', createdAt: '10/04/2025' },
-  { id: 2, name: 'João Pereira', phone: '(11) 91234-5678', status: 'Em Contato', interest: 'Clareamento', createdAt: '09/04/2025' },
-  { id: 3, name: 'Ana Costa', phone: '(21) 99876-5432', status: 'Qualificado', interest: 'Implante', createdAt: '08/04/2025' },
-  { id: 4, name: 'Carlos Santos', phone: '(31) 98765-1234', status: 'Em Contato', interest: 'Prótese', createdAt: '07/04/2025' },
-  { id: 5, name: 'Fernanda Lima', phone: '(41) 99988-7766', status: 'Novo', interest: 'Avaliação', createdAt: '05/04/2025' },
-  { id: 6, name: 'Roberto Campos', phone: '(11) 97777-8888', status: 'Qualificado', interest: 'Implante', createdAt: '04/04/2025' },
-  { id: 7, name: 'Mariana Souza', phone: '(21) 96666-5555', status: 'Novo', interest: 'Clareamento', createdAt: '03/04/2025' },
-  { id: 8, name: 'Paulo Oliveira', phone: '(31) 95555-4444', status: 'Em Contato', interest: 'Ortodontia', createdAt: '02/04/2025' },
-  { id: 9, name: 'Luciana Mendes', phone: '(41) 94444-3333', status: 'Qualificado', interest: 'Prótese', createdAt: '01/04/2025' },
-  { id: 10, name: 'Ricardo Ferreira', phone: '(51) 93333-2222', status: 'Em Contato', interest: 'Avaliação', createdAt: '30/03/2025' }
-];
+// Define the lead type to match supabase table structure
+interface Lead {
+  id: number;
+  name: string;
+  whatsapp: string;
+  status?: string;
+  interesse?: string;
+  "e-mail"?: string;
+  created_at?: string;
+}
 
 export const LeadsDetailedView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [interestFilter, setInterestFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const itemsPerPage = 5;
 
-  // Filter leads based on search query and filters
-  const filteredLeads = allLeads.filter(lead => {
-    const matchesSearch = 
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      lead.phone.includes(searchQuery) || 
-      (lead.interest && lead.interest.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesStatus = statusFilter === '' || lead.status === statusFilter;
-    const matchesInterest = interestFilter === '' || lead.interest === interestFilter;
-    
-    return matchesSearch && matchesStatus && matchesInterest;
-  });
+  // Fetch leads from Supabase
+  useEffect(() => {
+    const fetchLeads = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('leads')
+          .select('id, name, whatsapp, status, interesse, e-mail, created_at')
+          .order('id', { ascending: false })
+          .limit(5);
 
-  // Paginate results
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLeads = filteredLeads.slice(indexOfFirstItem, indexOfLastItem);
+        if (error) {
+          throw error;
+        }
+
+        console.log('Fetched leads data:', data);
+        setLeads(data || []);
+        setFilteredLeads(data || []);
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao buscar leads',
+          description: 'Não foi possível carregar os dados dos leads.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeads();
+  }, []);
+
+  // Filter leads based on search query and filters
+  useEffect(() => {
+    const filtered = leads.filter(lead => {
+      const matchesSearch = 
+        (lead.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+        (lead.whatsapp?.includes(searchQuery) || false) ||
+        (lead["e-mail"]?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === '' || lead.status === statusFilter;
+      const matchesInterest = interestFilter === '' || lead.interesse === interestFilter;
+      
+      return matchesSearch && matchesStatus && matchesInterest;
+    });
+
+    setFilteredLeads(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
+  }, [searchQuery, statusFilter, interestFilter, leads]);
+
+  // Paginate results (although we're limiting to 5 leads from the query)
+  const currentLeads = filteredLeads;
   const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
 
   // Get unique statuses and interests for filter options
-  const statuses = [...new Set(allLeads.map(lead => lead.status))];
-  const interests = [...new Set(allLeads.map(lead => lead.interest).filter(Boolean))] as string[];
+  const statuses = [...new Set(leads.map(lead => lead.status).filter(Boolean))] as string[];
+  const interests = [...new Set(leads.map(lead => lead.interesse).filter(Boolean))] as string[];
 
   return (
     <div className="space-y-4">
@@ -94,7 +132,7 @@ export const LeadsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="">Todos os Status</SelectItem>
                     {statuses.map(status => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
@@ -107,7 +145,7 @@ export const LeadsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Interesse" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os Interesses</SelectItem>
+                    <SelectItem value="">Todos os Interesses</SelectItem>
                     {interests.map(interest => (
                       <SelectItem key={interest} value={interest}>{interest}</SelectItem>
                     ))}
@@ -118,7 +156,13 @@ export const LeadsDetailedView: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-md border shadow-sm overflow-hidden">
-            <LeadsTable leads={currentLeads} />
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <p>Carregando leads...</p>
+              </div>
+            ) : (
+              <LeadsTable leads={currentLeads} />
+            )}
           </div>
 
           {filteredLeads.length > itemsPerPage && (
@@ -130,17 +174,6 @@ export const LeadsDetailedView: React.FC = () => {
                     className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <PaginationItem key={page}>
-                    <PaginationLink 
-                      isActive={page === currentPage}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
                 
                 <PaginationItem>
                   <PaginationNext 

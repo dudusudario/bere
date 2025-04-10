@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +41,9 @@ export const PatientsDetailedView: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('clinicorp')
-          .select('id, nome, whatsapp, email, status, ultima_visita, obs, procedimento, valor_do_orcamento, descricao');
+          .select('id, nome, whatsapp, email, status, ultima_visita, obs, procedimento, valor_do_orcamento, descricao')
+          .order('id', { ascending: false })
+          .limit(5);
 
         if (error) {
           throw error;
@@ -98,10 +99,9 @@ export const PatientsDetailedView: React.FC = () => {
     setShowPatientDetails(true);
   };
 
-  // Paginate results
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentPatients = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
+  // Always show all filtered patients (up to 5)
+  const currentPatients = filteredPatients;
+  // Keep totalPages calculation for pagination arrows functionality
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
 
   // Get unique statuses for filter options

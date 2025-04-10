@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/hooks/use-sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -18,7 +18,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <Sonner />
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar />
-          <div className="flex-1">
+          <div className="flex-1 md:ml-0 pt-[60px] md:pt-0">
             {children}
           </div>
         </div>

@@ -11,6 +11,7 @@ import UserProfile from "./pages/UserProfile";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
+import ChatInterface from "./components/ChatInterface";
 
 function App() {
   const queryClient = new QueryClient();
@@ -46,9 +47,14 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/chat" element={
+          <Route path="/dashboard" element={
             <AppLayout>
               <Index />
+            </AppLayout>
+          } />
+          <Route path="/chat" element={
+            <AppLayout>
+              <ChatInterface />
             </AppLayout>
           } />
           <Route path="/profile" element={

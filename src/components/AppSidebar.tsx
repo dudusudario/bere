@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, MessageCircle, User, LogOut, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -22,7 +22,12 @@ import {
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isMobile } = useSidebar();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
   
   const handleLogout = async () => {
     try {
@@ -39,6 +44,17 @@ export function AppSidebar() {
         title: 'Erro ao fazer logout',
         description: 'Ocorreu um erro. Tente novamente.',
       });
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    // Auto close sidebar on mobile
+    if (isMobile) {
+      const sidebarTrigger = document.querySelector('[data-sidebar="trigger"]');
+      if (sidebarTrigger) {
+        (sidebarTrigger as HTMLButtonElement).click();
+      }
     }
   };
 
@@ -61,28 +77,44 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Página Inicial" onClick={() => navigate('/')}>
+                <SidebarMenuButton 
+                  tooltip="Página Inicial" 
+                  onClick={() => handleNavigation('/')}
+                  isActive={isActive('/')}
+                >
                   <Home className="h-5 w-5" />
                   <span>Página Inicial</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Chat" onClick={() => navigate('/chat')}>
+                <SidebarMenuButton 
+                  tooltip="Chat" 
+                  onClick={() => handleNavigation('/chat')}
+                  isActive={isActive('/chat')}
+                >
                   <MessageCircle className="h-5 w-5" />
                   <span>Chat</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Perfil" onClick={() => navigate('/profile')}>
+                <SidebarMenuButton 
+                  tooltip="Perfil" 
+                  onClick={() => handleNavigation('/profile')}
+                  isActive={isActive('/profile')}
+                >
                   <User className="h-5 w-5" />
                   <span>Perfil</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Configurações" onClick={() => navigate('/admin')}>
+                <SidebarMenuButton 
+                  tooltip="Configurações" 
+                  onClick={() => handleNavigation('/admin')}
+                  isActive={isActive('/admin')}
+                >
                   <Settings className="h-5 w-5" />
                   <span>Configurações</span>
                 </SidebarMenuButton>

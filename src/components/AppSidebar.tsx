@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, User, LogOut, Settings } from 'lucide-react';
+import { Home, MessageCircle, User, LogOut, Settings, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -118,6 +117,18 @@ export function AppSidebar() {
                 >
                   <MessageCircle className="h-5 w-5" />
                   <span>Chat</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              {/* Novo item de menu para a Agenda */}
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  tooltip="Agenda" 
+                  onClick={() => handleNavigation('/dashboard/agenda')}
+                  isActive={isActive('/dashboard/agenda')}
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span>Agenda</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               

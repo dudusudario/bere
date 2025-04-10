@@ -13,8 +13,9 @@ import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
 import ChatInterface from "./components/ChatInterface";
 
-// Lazy load the messages page
+// Lazy load the pages
 const MessagesPage = lazy(() => import('./pages/dashboard/mensagens'));
+const AgendaPage = lazy(() => import('./pages/dashboard/agenda')); // Nova página de agenda
 
 function App() {
   const queryClient = new QueryClient();
@@ -73,6 +74,16 @@ function App() {
               <div className="dashboard-page">
                 <Suspense fallback={<div>Carregando...</div>}>
                   <MessagesPage />
+                </Suspense>
+              </div>
+            </AppLayout>
+          } />
+          {/* Nova rota para a página de agenda */}
+          <Route path="/dashboard/agenda" element={
+            <AppLayout>
+              <div className="dashboard-page">
+                <Suspense fallback={<div>Carregando...</div>}>
+                  <AgendaPage />
                 </Suspense>
               </div>
             </AppLayout>

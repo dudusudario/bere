@@ -23,7 +23,7 @@ const LandingPage: React.FC = () => {
 
   const handleAuthAction = () => {
     if (session) {
-      navigate('/chat');
+      navigate('/dashboard');
     } else {
       navigate('/auth');
     }
@@ -48,7 +48,7 @@ const LandingPage: React.FC = () => {
             onClick={handleAuthAction}
             className="shadow-lg"
           >
-            {session ? 'Acessar Chat' : 'Cadastre-se'} <ArrowRight className="ml-2 h-4 w-4" />
+            {session ? 'Acessar Dashboard' : 'Cadastre-se'} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </header>

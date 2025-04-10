@@ -24,13 +24,12 @@ const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) =>
   }
   
   // Se for uma rota apenas para admin, precisamos verificar o perfil do usuário
-  // Isso pode ser implementado posteriormente conforme a estrutura de perfis de usuário
   if (adminOnly) {
     // Verificação temporária - pode ser substituída pela lógica real de verificação de admin
     const isAdmin = user.email?.endsWith('@admin.com') || false;
     
     if (!isAdmin) {
-      return <Navigate to="/chat" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
   }
   

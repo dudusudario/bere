@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "./components/AppLayout";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
@@ -45,6 +46,13 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/chat" element={
               <ProtectedRoute>
                 <AppLayout>

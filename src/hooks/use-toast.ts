@@ -42,6 +42,8 @@ export const useToast = () => {
   
   return { 
     toast,
-    toasts // Added to fix the type error
+    toasts
   };
 };
+
+export default useToast;

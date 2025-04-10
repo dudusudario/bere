@@ -1,16 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
-import { LeadFormFields } from './LeadFormFields';
-import { LeadStatusSelect } from './LeadStatusSelect';
-import { LeadDetailsHeader } from './LeadDetailsHeader';
-import { LeadDetailsActions } from './LeadDetailsActions';
+import { toast } from '@/hooks/use-toast';
+import { ProfileDetails } from './ProfileDetails';
 import { LeadChatHistorySection } from './LeadChatHistorySection';
+import { Tab, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Lead {
   id: number;
@@ -36,33 +31,9 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
   onLeadUpdated
 }) => {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<Lead>>({});
+  const [activeTab, setActiveTab] = useState('profile');
 
-  useEffect(() => {
-    if (lead) {
-      setFormData({
-        name: lead.name,
-        whatsapp: lead.whatsapp,
-        tags: lead.tags,
-        interesse: lead.interesse,
-        "e-mail": lead["e-mail"],
-        created_at: lead.created_at
-      });
-    }
-  }, [lead]);
-
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleStatusChange = (value: string) => {
-    handleChange('tags', value);
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (formData: Record<string, string>) => {
     if (!lead) return;
     
     setLoading(true);
@@ -94,45 +65,47 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
     }
   };
 
-  const statusOptions = [
-    { value: "gengivoplastia", label: "Gengivoplastia", color: "bg-green-50 text-green-700 border-green-200" },
-    { value: "implante", label: "Implante", color: "bg-orange-50 text-orange-700 border-orange-200" },
-    { value: "protese", label: "Prótese", color: "bg-pink-50 text-pink-700 border-pink-200" },
-    { value: "dentadura", label: "Dentadura", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-    { value: "canal", label: "Canal", color: "bg-purple-50 text-purple-700 border-purple-200" },
-    { value: "coroa", label: "Coroa", color: "bg-amber-50 text-amber-700 border-amber-200" },
-    { value: "lentes", label: "Lentes", color: "bg-blue-50 text-blue-700 border-blue-200" },
-    { value: "desqualificado", label: "Desqualificado", color: "bg-red-50 text-red-700 border-red-200" },
-    { value: "pausado", label: "Pausado", color: "bg-gray-50 text-gray-700 border-gray-200" }
-  ];
+  // Map lead data to fields for the profile component
+  const getLeadFields = () => {
+    if (!lead) return [];
+    
+    return [
+      { name: 'name', label: 'Nombres', value: lead.name || '', required: true },
+      { name: 'last_name', label: 'Apellidos', value: '', required: true }, // Assuming last name is not available in current data
+      { name: 'user_id', label: 'Usuario', value: lead.whatsapp || '', required: true },
+      { name: 'e-mail', label: 'Correo electrónico', value: lead["e-mail"] || '', required: true },
+      { name: 'country', label: 'País de residencia', value: 'Brasil', required: true },
+      { name: 'whatsapp', label: 'Número telefónico', value: lead.whatsapp || '', required: true },
+      { name: 'interesse', label: 'Interesse', value: lead.interesse || '' },
+      { name: 'tags', label: 'Status', value: lead.tags || '' },
+    ];
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-        <LeadDetailsHeader createdAt={lead?.created_at} />
-        
+      <DialogContent className="sm:max-w-4xl overflow-y-auto max-h-[90vh]" hideCloseButton>
         {lead && (
-          <div className="grid gap-4 py-4">
-            <LeadFormFields 
-              formData={formData} 
-              onFieldChange={handleChange}
-            />
+          <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="profile">Perfil</TabsTrigger>
+              <TabsTrigger value="chat">Histórico de Chat</TabsTrigger>
+            </TabsList>
             
-            <LeadStatusSelect 
-              currentStatus={formData.tags || ''}
-              onStatusChange={handleStatusChange}
-              statusOptions={statusOptions}
-            />
-
-            <LeadChatHistorySection whatsapp={lead.whatsapp} />
-          </div>
+            <TabsContent value="profile" className="m-0">
+              <ProfileDetails
+                title="Perfil do Lead"
+                fields={getLeadFields()}
+                onSave={handleSubmit}
+                onCancel={onClose}
+                isLoading={loading}
+              />
+            </TabsContent>
+            
+            <TabsContent value="chat" className="m-0">
+              <LeadChatHistorySection whatsapp={lead.whatsapp} />
+            </TabsContent>
+          </Tabs>
         )}
-        
-        <LeadDetailsActions 
-          onCancel={onClose}
-          onSave={handleSubmit}
-          isLoading={loading}
-        />
       </DialogContent>
     </Dialog>
   );

@@ -7,3 +7,5 @@ export { EmptyTabContent } from './EmptyTabContent';
 export { SearchInput } from './SearchInput';
 export { LeadsTable } from './LeadsTable';
 export { PatientsTable } from './PatientsTable';
+export { LeadsDetailedView } from './LeadsDetailedView';
+export { PatientsDetailedView } from './PatientsDetailedView';

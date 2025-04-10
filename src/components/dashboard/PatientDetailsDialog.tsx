@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Calendar, Phone, Mail, CalendarIcon, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -14,13 +13,8 @@ import {
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { PatientStatusSelect } from './PatientStatusSelect';
+import { PatientInfoDisplay } from './PatientInfoDisplay';
 
 interface Patient {
   id: number;
@@ -41,34 +35,6 @@ interface PatientDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Helper function to get badge style based on status
-const getStatusStyle = (status: string) => {
-  switch(status?.toLowerCase()) {
-    case 'ativo':
-      return 'bg-green-50 text-green-700 border-green-200';
-    case 'pendente':
-      return 'bg-amber-50 text-amber-700 border-amber-200';
-    case 'inativo':
-      return 'bg-gray-50 text-gray-700 border-gray-200';
-    default:
-      return 'bg-gray-50 text-gray-700 border-gray-200';
-  }
-};
-
-// Helper function to get status icon
-const getStatusIcon = (status: string) => {
-  switch(status?.toLowerCase()) {
-    case 'ativo':
-      return <CheckCircle className="h-4 w-4 text-green-600" />;
-    case 'pendente':
-      return <Clock className="h-4 w-4 text-amber-600" />;
-    case 'inativo':
-      return <AlertCircle className="h-4 w-4 text-gray-600" />;
-    default:
-      return <AlertCircle className="h-4 w-4 text-gray-600" />;
-  }
-};
-
 export const PatientDetailsDialog: React.FC<PatientDetailsDialogProps> = ({ 
   patient, 
   open, 
@@ -79,7 +45,7 @@ export const PatientDetailsDialog: React.FC<PatientDetailsDialogProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Set current status when patient data changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (patient) {
       setCurrentStatus(patient.status || 'Pendente');
     }
@@ -128,72 +94,14 @@ export const PatientDetailsDialog: React.FC<PatientDetailsDialogProps> = ({
         </DialogHeader>
         
         {patient && (
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">WhatsApp: {patient.whatsapp || '-'}</p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Email: {patient.email || '-'}</p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Última Visita: {patient.ultima_visita || '-'}</p>
-              </div>
-
-              <div className="pt-2">
-                <h4 className="text-sm font-semibold mb-2">Status</h4>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className={getStatusStyle(currentStatus)}>
-                    {getStatusIcon(currentStatus)} <span className="ml-1">{currentStatus || 'Pendente'}</span>
-                  </Badge>
-                  <div>
-                    <Select value={currentStatus} onValueChange={handleStatusChange} disabled={isUpdating}>
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Alterar status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Ativo">Ativo</SelectItem>
-                        <SelectItem value="Pendente">Pendente</SelectItem>
-                        <SelectItem value="Inativo">Inativo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {patient.procedimento && (
-                <div className="pt-2">
-                  <h4 className="text-sm font-semibold mb-1">Procedimento</h4>
-                  <p className="text-sm">{patient.procedimento}</p>
-                </div>
-              )}
-
-              {patient.valor_do_orcamento && (
-                <div className="pt-2">
-                  <h4 className="text-sm font-semibold mb-1">Valor do Orçamento</h4>
-                  <p className="text-sm">{patient.valor_do_orcamento}</p>
-                </div>
-              )}
-
-              {patient.obs && (
-                <div className="pt-2">
-                  <h4 className="text-sm font-semibold mb-1">Observações</h4>
-                  <p className="text-sm">{patient.obs}</p>
-                </div>
-              )}
-
-              {patient.descricao && (
-                <div className="pt-2">
-                  <h4 className="text-sm font-semibold mb-1">Descrição</h4>
-                  <p className="text-sm">{patient.descricao}</p>
-                </div>
-              )}
-            </div>
+          <div className="space-y-4">
+            <PatientInfoDisplay patient={patient} />
+            
+            <PatientStatusSelect 
+              currentStatus={currentStatus}
+              onStatusChange={handleStatusChange}
+              isUpdating={isUpdating}
+            />
           </div>
         )}
 

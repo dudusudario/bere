@@ -54,7 +54,7 @@ export const LeadsDetailedView: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('leads')
-          .select('id, name, whatsapp, tags, interesse, e-mail, created_at')
+          .select('id, name, whatsapp, tags, interesse, "e-mail", created_at')
           .order('id', { ascending: false })
           .limit(5);
 

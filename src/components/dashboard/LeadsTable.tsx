@@ -9,7 +9,7 @@ interface Lead {
   id: number;
   name: string;
   whatsapp: string;
-  status?: string;
+  tags?: string;
   interesse?: string;
   "e-mail"?: string;
   created_at?: string;
@@ -60,17 +60,17 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({ leads }) => {
             <TableCell className="font-medium">{lead.name || '-'}</TableCell>
             <TableCell>{lead.whatsapp || '-'}</TableCell>
             <TableCell>
-              {lead.status ? (
+              {lead.tags ? (
                 <Badge variant="outline" className={
-                  lead.status.toLowerCase().includes('novo') ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                  lead.status.toLowerCase().includes('contato') ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  lead.status.toLowerCase().includes('qualificado') ? 'bg-green-50 text-green-700 border-green-200' :
-                  lead.status.toLowerCase().includes('desqualificado') ? 'bg-red-50 text-red-700 border-red-200' :
-                  lead.status.toLowerCase().includes('agendado') ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                  lead.status.toLowerCase().includes('pausado') ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                  lead.tags.toLowerCase().includes('novo') ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                  lead.tags.toLowerCase().includes('contato') ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  lead.tags.toLowerCase().includes('qualificado') ? 'bg-green-50 text-green-700 border-green-200' :
+                  lead.tags.toLowerCase().includes('desqualificado') ? 'bg-red-50 text-red-700 border-red-200' :
+                  lead.tags.toLowerCase().includes('agendado') ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                  lead.tags.toLowerCase().includes('pausado') ? 'bg-gray-50 text-gray-700 border-gray-200' :
                   'bg-gray-50 text-gray-700 border-gray-200'
                 }>
-                  {lead.status}
+                  {lead.tags}
                 </Badge>
               ) : '-'}
             </TableCell>

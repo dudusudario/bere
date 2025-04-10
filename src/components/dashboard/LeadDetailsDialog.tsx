@@ -8,18 +8,10 @@ import {
   DialogFooter 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { LeadFormFields } from './LeadFormFields';
+import { LeadStatusSelect } from './LeadStatusSelect';
 
 interface Lead {
   id: number;
@@ -66,6 +58,10 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
     }));
   };
 
+  const handleStatusChange = (value: string) => {
+    handleChange('tags', value);
+  };
+
   const handleSubmit = async () => {
     if (!lead) return;
     
@@ -110,13 +106,6 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
     { value: "pausado", label: "Pausado", color: "bg-gray-50 text-gray-700 border-gray-200" }
   ];
 
-  const getStatusColor = (status?: string) => {
-    if (!status) return '';
-    
-    const option = statusOptions.find(opt => opt.value === status);
-    return option ? option.color : '';
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -126,78 +115,16 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
         
         {lead && (
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Nome</Label>
-              <Input
-                id="name"
-                value={formData.name || ''}
-                onChange={(e) => handleChange('name', e.target.value)}
-                className="col-span-3"
-              />
-            </div>
+            <LeadFormFields 
+              formData={formData} 
+              onFieldChange={handleChange}
+            />
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="whatsapp" className="text-right">WhatsApp</Label>
-              <Input
-                id="whatsapp"
-                value={formData.whatsapp || ''}
-                onChange={(e) => handleChange('whatsapp', e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">Email</Label>
-              <Input
-                id="email"
-                value={formData["e-mail"] || ''}
-                onChange={(e) => handleChange('e-mail', e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="interesse" className="text-right">Interesse</Label>
-              <Input
-                id="interesse"
-                value={formData.interesse || ''}
-                onChange={(e) => handleChange('interesse', e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">Status</Label>
-              <div className="col-span-3">
-                <Select 
-                  value={formData.tags || ''} 
-                  onValueChange={(value) => handleChange('tags', value)}
-                >
-                  <SelectTrigger>
-                    {formData.tags ? (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={getStatusColor(formData.tags)}>
-                          {formData.tags}
-                        </Badge>
-                      </div>
-                    ) : (
-                      <SelectValue placeholder="Selecione um status" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={option.color}>
-                            {option.label}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <LeadStatusSelect 
+              currentStatus={formData.tags || ''}
+              onStatusChange={handleStatusChange}
+              statusOptions={statusOptions}
+            />
           </div>
         )}
         

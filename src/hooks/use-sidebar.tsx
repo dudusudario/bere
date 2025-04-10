@@ -26,6 +26,8 @@ interface SidebarProviderProps {
   className?: string;
   style?: React.CSSProperties;
   animate?: boolean;
+  open?: boolean;
+  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const SidebarProvider = ({
@@ -34,13 +36,18 @@ export const SidebarProvider = ({
   className,
   style,
   animate = true,
+  open: openProp,
+  setOpen: setOpenProp,
 }: SidebarProviderProps) => {
   const isMobile = useIsMobile();
-  const [open, setOpen] = useState(defaultOpen && !isMobile);
+  const [openState, setOpenState] = useState(defaultOpen && !isMobile);
+
+  const open = openProp !== undefined ? openProp : openState;
+  const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState;
 
   const toggleSidebar = React.useCallback(() => {
     setOpen((prev) => !prev);
-  }, []);
+  }, [setOpen]);
 
   const contextValue = React.useMemo(() => ({
     open,
@@ -48,7 +55,7 @@ export const SidebarProvider = ({
     isMobile,
     toggleSidebar,
     animate,
-  }), [open, isMobile, toggleSidebar, animate]);
+  }), [open, setOpen, isMobile, toggleSidebar, animate]);
 
   return (
     <SidebarContext.Provider value={contextValue}>

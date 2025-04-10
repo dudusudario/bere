@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, MessageCircle, User, LogOut, Settings, Menu, X } from 'lucide-react';
-import * as motion from 'motion';
+import { motion } from 'motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useSidebar } from '@/hooks/use-sidebar';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { open, setOpen, isMobile, toggleSidebar } = useSidebar();
+  const { open, setOpen, isMobile, toggleSidebar, animate } = useSidebar();
   
   const handleLogout = async () => {
     try {
@@ -91,7 +91,7 @@ export function AppSidebar() {
             <div 
               key={item.path}
               className={cn(
-                "flex items-center gap-2 rounded-md px-3 py-2 transition-colors cursor-pointer",
+                "flex items-center gap-2 rounded-md px-3 py-2 transition-colors cursor-pointer group/sidebar",
                 isActive(item.path) 
                   ? "bg-primary/10 text-primary" 
                   : "text-sidebar-foreground hover:bg-primary/5"
@@ -99,15 +99,17 @@ export function AppSidebar() {
               onClick={() => navigate(item.path)}
             >
               {item.icon}
-              <motion.span
+              <motion.div
                 animate={{
                   opacity: open ? 1 : 0,
                   width: open ? 'auto' : 0,
                 }}
                 className="overflow-hidden whitespace-nowrap"
               >
-                {item.title}
-              </motion.span>
+                <span className="text-sm group-hover/sidebar:translate-x-1 transition-transform duration-150">
+                  {item.title}
+                </span>
+              </motion.div>
             </div>
           ))}
         </div>
@@ -115,19 +117,21 @@ export function AppSidebar() {
       
       <div className="p-3 border-t">
         <div 
-          className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-primary/5 transition-colors cursor-pointer"
+          className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-primary/5 transition-colors cursor-pointer group/sidebar"
           onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
-          <motion.span
+          <motion.div
             animate={{
               opacity: open ? 1 : 0,
               width: open ? 'auto' : 0,
             }}
             className="overflow-hidden whitespace-nowrap"
           >
-            Sair
-          </motion.span>
+            <span className="text-sm group-hover/sidebar:translate-x-1 transition-transform duration-150">
+              Sair
+            </span>
+          </motion.div>
         </div>
       </div>
     </motion.div>
@@ -147,7 +151,6 @@ export function AppSidebar() {
         </Button>
       </div>
       
-      {/* We need to handle AnimatePresence differently with the motion library */}
       {isMobile && open && (
         <>
           <div 

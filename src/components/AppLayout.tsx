@@ -12,7 +12,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider animate={true} className="flex min-h-screen w-full bg-background">
       <TooltipProvider>
         <Toaster />
         <Sonner />

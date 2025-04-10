@@ -18,14 +18,15 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
   const sendMessage = useCallback(async (content: string, phoneNumber: string) => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
-    await addMessage(content, 'user', selectedFiles.map(f => f.file), phoneNumber);
-    
-    // Cancel any previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
     try {
+      // Add user message to chat immediately
+      await addMessage(content, 'user', selectedFiles.map(f => f.file), phoneNumber);
+      
+      // Cancel any previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
       const controller = new AbortController();
       abortControllerRef.current = controller;
       const signal = controller.signal;
@@ -58,7 +59,10 @@ export const useChatSender = ({ addMessage, selectedFiles, clearFiles }: UseChat
       const parsedMessage = parseResponse(responseText);
       console.log('Mensagem parseada:', parsedMessage);
       
-      await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
+      // Add AI response to chat
+      if (parsedMessage) {
+        await addMessage(parsedMessage, 'ai', undefined, phoneNumber);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       

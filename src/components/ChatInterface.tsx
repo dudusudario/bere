@@ -6,7 +6,7 @@ import FileUpload from './FileUpload';
 import TypingIndicator from './TypingIndicator';
 import ProfileEditSheet from './ProfileEditSheet';
 import { useChat } from '../hooks/chat';
-import { Loader2, User, Phone, Settings, MessageCircle } from 'lucide-react';
+import { Loader2, User, Phone, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { sendToN8n } from '../utils/sendToN8n';
 import ChatFeed from './ChatFeed';
@@ -62,18 +62,21 @@ const ChatInterface: React.FC = () => {
     setSendingMessage(true);
     
     try {
-      // First register the message in the original system for compatibility
-      await originalSendMessage(content, userPhone);
+      console.log("Enviando mensagem:", content, "para número:", userPhone);
       
-      // Then send to n8n via webhook
-      await sendToN8n({
+      // Send to n8n via webhook
+      const success = await sendToN8n({
         username: userPhone, // Use phone as user identifier
         numero: userPhone,
         mensagem: content
       });
       
-      // Message sent successfully
-      toast.success("Mensagem enviada com sucesso");
+      if (success) {
+        // Message sent successfully
+        toast.success("Mensagem enviada com sucesso");
+      } else {
+        toast.error("Falha ao enviar mensagem para o agente");
+      }
     } catch (error) {
       console.error("Erro ao enviar mensagem ao n8n:", error);
       toast.error("Erro ao enviar mensagem para o agente");

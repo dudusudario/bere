@@ -69,7 +69,7 @@ export const saveMessageToSupabase = async ({ username, numero, mensagem, origem
     
     // Insert the message into the user_menssagens table
     const { error } = await supabase
-      .from('user_menssagens' as any)
+      .from('user_menssagens')
       .insert({
         username,
         numero,

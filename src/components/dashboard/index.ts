@@ -13,3 +13,6 @@ export { PatientDetailsDialog } from './PatientDetailsDialog';
 export { PatientFilters } from './PatientFilters';
 export { PatientPagination } from './PatientPagination';
 export { PatientActions } from './PatientActions';
+export { LeadFilters } from './LeadFilters';
+export { LeadPagination } from './LeadPagination';
+export { LeadActions } from './LeadActions';

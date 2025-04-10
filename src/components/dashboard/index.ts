@@ -9,3 +9,7 @@ export { LeadsTable } from './LeadsTable';
 export { PatientsTable } from './PatientsTable';
 export { LeadsDetailedView } from './LeadsDetailedView';
 export { PatientsDetailedView } from './PatientsDetailedView';
+export { PatientDetailsDialog } from './PatientDetailsDialog';
+export { PatientFilters } from './PatientFilters';
+export { PatientPagination } from './PatientPagination';
+export { PatientActions } from './PatientActions';

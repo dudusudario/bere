@@ -14,7 +14,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Filter, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { 
   Pagination, 
   PaginationContent, 
@@ -31,7 +31,7 @@ interface Lead {
   id: number;
   name: string;
   whatsapp: string;
-  status?: string;
+  tags?: string;
   interesse?: string;
   "e-mail"?: string;
   created_at?: string;
@@ -39,8 +39,8 @@ interface Lead {
 
 export const LeadsDetailedView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [interestFilter, setInterestFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // Changed from empty string to 'all'
+  const [interestFilter, setInterestFilter] = useState('all'); // Changed from empty string to 'all'
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -54,7 +54,7 @@ export const LeadsDetailedView: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('leads')
-          .select('id, name, whatsapp, status, interesse, e-mail, created_at')
+          .select('id, name, whatsapp, tags, interesse, e-mail, created_at')
           .order('id', { ascending: false })
           .limit(5);
 
@@ -88,8 +88,9 @@ export const LeadsDetailedView: React.FC = () => {
         (lead.whatsapp?.includes(searchQuery) || false) ||
         (lead["e-mail"]?.toLowerCase() || '').includes(searchQuery.toLowerCase());
       
-      const matchesStatus = statusFilter === '' || lead.status === statusFilter;
-      const matchesInterest = interestFilter === '' || lead.interesse === interestFilter;
+      // Modified to check against 'all' instead of empty string
+      const matchesStatus = statusFilter === 'all' || lead.tags === statusFilter;
+      const matchesInterest = interestFilter === 'all' || lead.interesse === interestFilter;
       
       return matchesSearch && matchesStatus && matchesInterest;
     });
@@ -103,7 +104,7 @@ export const LeadsDetailedView: React.FC = () => {
   const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
 
   // Get unique statuses and interests for filter options
-  const statuses = [...new Set(leads.map(lead => lead.status).filter(Boolean))] as string[];
+  const statuses = [...new Set(leads.map(lead => lead.tags).filter(Boolean))] as string[];
   const interests = [...new Set(leads.map(lead => lead.interesse).filter(Boolean))] as string[];
 
   return (
@@ -132,7 +133,7 @@ export const LeadsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os Status</SelectItem>
+                    <SelectItem value="all">Todos os Status</SelectItem>
                     {statuses.map(status => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
@@ -145,7 +146,7 @@ export const LeadsDetailedView: React.FC = () => {
                     <SelectValue placeholder="Interesse" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os Interesses</SelectItem>
+                    <SelectItem value="all">Todos os Interesses</SelectItem>
                     {interests.map(interest => (
                       <SelectItem key={interest} value={interest}>{interest}</SelectItem>
                     ))}

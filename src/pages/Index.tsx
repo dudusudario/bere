@@ -5,8 +5,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartLegendContent } from "@/components/ui/chart";
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
-import { Users, UserPlus, Phone, Calendar, ArrowUpRight, ArrowDownRight, MessageSquare } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
+import { Users, UserPlus, Phone, Calendar, ArrowUpRight, MessageSquare } from 'lucide-react';
 
 const Index: React.FC = () => {
   const [user, setUser] = useState(null);
@@ -223,14 +223,12 @@ const Index: React.FC = () => {
                       </Pie>
                       <Tooltip />
                       <Legend 
-                        content={props => (
-                          <ChartLegendContent
-                            {...props}
-                            nameKey="name"
-                            verticalAlign="bottom"
-                            className="mt-6"
-                          />
-                        )}
+                        payload={conversionData.map((item, index) => ({
+                          value: item.name,
+                          color: COLORS[index % COLORS.length]
+                        }))}
+                        layout="horizontal"
+                        verticalAlign="bottom"
                       />
                     </PieChart>
                   </ChartContainer>

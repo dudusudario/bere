@@ -2,19 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+  DialogContent
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { LeadFormFields } from './LeadFormFields';
 import { LeadStatusSelect } from './LeadStatusSelect';
-import { LeadChatHistory } from './LeadChatHistory';
-import { format, isValid, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { LeadDetailsHeader } from './LeadDetailsHeader';
+import { LeadDetailsActions } from './LeadDetailsActions';
+import { LeadChatHistorySection } from './LeadChatHistorySection';
 
 interface Lead {
   id: number;
@@ -41,8 +37,6 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Lead>>({});
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -54,38 +48,8 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
         "e-mail": lead["e-mail"],
         created_at: lead.created_at
       });
-
-      // Fetch chat history when lead is selected
-      fetchChatHistory(lead.whatsapp);
     }
   }, [lead]);
-
-  const fetchChatHistory = async (whatsapp: string) => {
-    if (!whatsapp) return;
-    
-    setIsLoadingHistory(true);
-    try {
-      const { data, error } = await supabase
-        .from('n8n_chat_histories')
-        .select('*')
-        .eq('session_id', whatsapp)
-        .order('id', { ascending: false })
-        .limit(5);
-      
-      if (error) throw error;
-      
-      setChatHistory(data || []);
-    } catch (error) {
-      console.error('Error fetching chat history:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar histórico de chat",
-        description: "Não foi possível carregar as conversas recentes.",
-      });
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -130,20 +94,6 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    
-    try {
-      const date = parseISO(dateString);
-      if (isValid(date)) {
-        return format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR });
-      }
-      return dateString;
-    } catch (error) {
-      return dateString;
-    }
-  };
-
   const statusOptions = [
     { value: "gengivoplastia", label: "Gengivoplastia", color: "bg-green-50 text-green-700 border-green-200" },
     { value: "implante", label: "Implante", color: "bg-orange-50 text-orange-700 border-orange-200" },
@@ -159,14 +109,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Detalhes do Lead</DialogTitle>
-          {lead?.created_at && (
-            <div className="text-sm text-muted-foreground">
-              Data de criação: {formatDate(lead.created_at)}
-            </div>
-          )}
-        </DialogHeader>
+        <LeadDetailsHeader createdAt={lead?.created_at} />
         
         {lead && (
           <div className="grid gap-4 py-4">
@@ -181,22 +124,15 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
               statusOptions={statusOptions}
             />
 
-            <div className="border-t pt-4 mt-2">
-              <h3 className="font-medium mb-3">Histórico de Conversas Recentes</h3>
-              <LeadChatHistory 
-                chatHistory={chatHistory} 
-                isLoading={isLoadingHistory} 
-              />
-            </div>
+            <LeadChatHistorySection whatsapp={lead.whatsapp} />
           </div>
         )}
         
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Salvando...' : 'Salvar alterações'}
-          </Button>
-        </DialogFooter>
+        <LeadDetailsActions 
+          onCancel={onClose}
+          onSave={handleSubmit}
+          isLoading={loading}
+        />
       </DialogContent>
     </Dialog>
   );

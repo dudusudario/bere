@@ -23,3 +23,6 @@ export { LeadDetailsDialog } from './LeadDetailsDialog';
 export { LeadFormFields } from './LeadFormFields';
 export { LeadStatusSelect } from './LeadStatusSelect';
 export { LeadChatHistory } from './LeadChatHistory';
+export { LeadDetailsHeader } from './LeadDetailsHeader';
+export { LeadDetailsActions } from './LeadDetailsActions';
+export { LeadChatHistorySection } from './LeadChatHistorySection';

@@ -1,25 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
-import ChatMessage from './ChatMessage';
-import MessageInput from './MessageInput';
-import FileUpload from './FileUpload';
-import TypingIndicator from './TypingIndicator';
 import ProfileEditSheet from './ProfileEditSheet';
 import { useChat } from '../hooks/chat';
-import { Loader2, User, Phone, Settings } from 'lucide-react';
-import { Button } from './ui/button';
-import { sendToN8n } from '../utils/sendToN8n';
 import ChatFeed from './ChatFeed';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { sendWhatsAppMessage } from '../utils/whatsGwApi';
+import { useWhatsappIntegration } from '../hooks/useWhatsappIntegration';
+import { useMessageSender } from '../hooks/useMessageSender';
+import ChatHeader from './chat/ChatHeader';
+import ChatContainer from './chat/ChatContainer';
+import MessageInputContainer from './chat/MessageInputContainer';
 
 const ChatInterface: React.FC = () => {
-  const navigate = useNavigate();
   const userPhone = localStorage.getItem('userPhone') || '';
   const [profileOpen, setProfileOpen] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const [isWhatsGWEnabled, setIsWhatsGWEnabled] = useState(false);
+  const { isWhatsGWEnabled } = useWhatsappIntegration();
 
   const {
     messages,
@@ -27,7 +21,6 @@ const ChatInterface: React.FC = () => {
     isLoadingHistory,
     selectedFiles,
     chatContainerRef,
-    sendMessage: originalSendMessage,
     loadMessageHistory,
     handleFileChange,
     removeFile,
@@ -36,6 +29,12 @@ const ChatInterface: React.FC = () => {
     copyMessageToClipboard,
     deleteMessage
   } = useChat();
+
+  const { sendingMessage, handleSendMessage } = useMessageSender({
+    userPhone,
+    isWhatsGWEnabled,
+    selectedFiles
+  });
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -50,148 +49,39 @@ const ChatInterface: React.FC = () => {
     loadHistory();
   }, [userPhone, loadMessageHistory]);
 
-  useEffect(() => {
-    const whatsgwEnabled = localStorage.getItem('whatsgw_enabled') === 'true';
-    setIsWhatsGWEnabled(whatsgwEnabled);
-  }, []);
-
-  const handleSendMessage = async (content: string) => {
-    if (!userPhone) {
-      toast.error("Por favor, configure seu telefone no perfil primeiro");
-      return;
-    }
-    
-    setSendingMessage(true);
-    
-    try {
-      console.log("Enviando mensagem:", content, "para número:", userPhone);
-      
-      let success = false;
-      
-      if (isWhatsGWEnabled) {
-        success = await sendWhatsAppMessage({
-          number: userPhone,
-          message: content,
-          files: selectedFiles.map(f => f.file)
-        });
-        
-        if (success) {
-          toast.success("Mensagem enviada com sucesso via WhatsApp");
-        } else {
-          toast.error("Falha ao enviar mensagem via WhatsApp");
-        }
-      } else {
-        success = await sendToN8n({
-          username: userPhone,
-          numero: userPhone,
-          mensagem: content
-        });
-        
-        if (success) {
-          toast.success("Mensagem enviada com sucesso");
-        } else {
-          toast.error("Falha ao enviar mensagem para o agente");
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
-      toast.error("Erro ao enviar mensagem para o agente");
-    } finally {
-      setSendingMessage(false);
-    }
-  };
-
-  const handleDeleteMessage = (messageId: string) => {
-    deleteMessage(messageId);
-  };
-
-  const goToWebhookConfig = () => {
-    navigate('/admin');
-  };
-
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
-      <div className="flex justify-between p-2 border-b">
-        {userPhone ? (
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Phone className="h-3 w-3 mr-1" />
-            <span>{userPhone}</span>
-          </div>
-        ) : (
-          <div className="flex items-center text-sm text-destructive">
-            <Phone className="h-3 w-3 mr-1" />
-            <span>Configure seu telefone no perfil</span>
-          </div>
-        )}
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-2"
-            onClick={goToWebhookConfig}
-          >
-            <Settings className="h-4 w-4" />
-            <span>{isWhatsGWEnabled ? "WhatsApp" : "Webhooks"}</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="flex items-center gap-2"
-            onClick={() => setProfileOpen(true)}
-          >
-            <User className="h-4 w-4" />
-            <span>Perfil</span>
-          </Button>
-        </div>
-        <ProfileEditSheet open={profileOpen} onOpenChange={setProfileOpen} />
-      </div>
+      <ChatHeader 
+        userPhone={userPhone}
+        isWhatsGWEnabled={isWhatsGWEnabled}
+        onOpenProfile={() => setProfileOpen(true)}
+      />
 
       {isWhatsGWEnabled ? (
         <ChatFeed phoneNumber={userPhone} />
       ) : (
-        <div
-          ref={chatContainerRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4"
-        >
-          {isLoadingHistory && !historyLoaded ? (
-            <div className="flex items-center justify-center h-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Carregando histórico...</span>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-              <p className="mb-2">Bem-vindo à sua assistente pessoal!</p>
-              <p>Envie uma mensagem para iniciar a conversa.</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                onToggleFavorite={() => toggleFavorite(message.id)}
-                onCopyToClipboard={() => copyMessageToClipboard(message.id)}
-                onDelete={() => handleDeleteMessage(message.id)}
-              />
-            ))
-          )}
-          {isLoading && <TypingIndicator />}
-        </div>
+        <ChatContainer
+          chatContainerRef={chatContainerRef}
+          isLoadingHistory={isLoadingHistory}
+          historyLoaded={historyLoaded}
+          messages={messages}
+          isLoading={isLoading}
+          toggleFavorite={toggleFavorite}
+          copyMessageToClipboard={copyMessageToClipboard}
+          handleDeleteMessage={deleteMessage}
+        />
       )}
 
-      <div className="border-t p-4 bg-background">
-        <FileUpload
-          selectedFiles={selectedFiles}
-          onFileChange={handleFileChange}
-          onRemove={removeFile}
-          onClear={clearFiles}
-        />
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading || sendingMessage}
-        />
-      </div>
+      <MessageInputContainer
+        selectedFiles={selectedFiles}
+        onFileChange={handleFileChange}
+        onRemoveFile={removeFile}
+        onClearFiles={clearFiles}
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading || sendingMessage}
+      />
+
+      <ProfileEditSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </div>
   );
 };

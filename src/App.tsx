@@ -16,7 +16,6 @@ import Login from "./pages/Login";
 
 // Lazy load the pages
 const MessagesPage = lazy(() => import('./pages/dashboard/mensagens'));
-const ConversasPage = lazy(() => import('./pages/dashboard/conversas')); 
 const AgendaPage = lazy(() => import('./pages/dashboard/agenda'));
 
 function App() {
@@ -85,13 +84,6 @@ function App() {
             <AppLayout>
               <Suspense fallback={<div>Carregando...</div>}>
                 <MessagesPage />
-              </Suspense>
-            </AppLayout>
-          } />
-          <Route path="/dashboard/conversas" element={
-            <AppLayout>
-              <Suspense fallback={<div>Carregando...</div>}>
-                <ConversasPage />
               </Suspense>
             </AppLayout>
           } />

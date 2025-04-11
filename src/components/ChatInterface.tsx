@@ -3,8 +3,6 @@ import React, { useState, useEffect } from 'react';
 import ProfileEditSheet from './ProfileEditSheet';
 import { useChat } from '../hooks/chat';
 import ChatFeed from './ChatFeed';
-import { useWhatsappIntegration } from '../hooks/useWhatsappIntegration';
-import { useMessageSender } from '../hooks/useMessageSender';
 import ChatHeader from './chat/ChatHeader';
 import ChatContainer from './chat/ChatContainer';
 import MessageInputContainer from './chat/MessageInputContainer';
@@ -13,7 +11,6 @@ const ChatInterface: React.FC = () => {
   const userPhone = localStorage.getItem('userPhone') || '';
   const [profileOpen, setProfileOpen] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
-  const { isWhatsGWEnabled } = useWhatsappIntegration();
 
   const {
     messages,
@@ -27,14 +24,9 @@ const ChatInterface: React.FC = () => {
     clearFiles,
     toggleFavorite,
     copyMessageToClipboard,
-    deleteMessage
+    deleteMessage,
+    sendMessage
   } = useChat();
-
-  const { sendingMessage, handleSendMessage } = useMessageSender({
-    userPhone,
-    isWhatsGWEnabled,
-    selectedFiles
-  });
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -49,28 +41,27 @@ const ChatInterface: React.FC = () => {
     loadHistory();
   }, [userPhone, loadMessageHistory]);
 
+  const handleSendMessage = (content: string) => {
+    sendMessage(content, userPhone);
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
       <ChatHeader 
         userPhone={userPhone}
-        isWhatsGWEnabled={isWhatsGWEnabled}
         onOpenProfile={() => setProfileOpen(true)}
       />
 
-      {isWhatsGWEnabled ? (
-        <ChatFeed phoneNumber={userPhone} />
-      ) : (
-        <ChatContainer
-          chatContainerRef={chatContainerRef}
-          isLoadingHistory={isLoadingHistory}
-          historyLoaded={historyLoaded}
-          messages={messages}
-          isLoading={isLoading}
-          toggleFavorite={toggleFavorite}
-          copyMessageToClipboard={copyMessageToClipboard}
-          handleDeleteMessage={deleteMessage}
-        />
-      )}
+      <ChatContainer
+        chatContainerRef={chatContainerRef}
+        isLoadingHistory={isLoadingHistory}
+        historyLoaded={historyLoaded}
+        messages={messages}
+        isLoading={isLoading}
+        toggleFavorite={toggleFavorite}
+        copyMessageToClipboard={copyMessageToClipboard}
+        handleDeleteMessage={deleteMessage}
+      />
 
       <MessageInputContainer
         selectedFiles={selectedFiles}
@@ -78,7 +69,7 @@ const ChatInterface: React.FC = () => {
         onRemoveFile={removeFile}
         onClearFiles={clearFiles}
         onSendMessage={handleSendMessage}
-        isLoading={isLoading || sendingMessage}
+        isLoading={isLoading}
       />
 
       <ProfileEditSheet open={profileOpen} onOpenChange={setProfileOpen} />

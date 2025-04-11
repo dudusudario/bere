@@ -7,7 +7,6 @@ import {
   MessageSquare, 
   Settings, 
   Menu,
-  MessageCircle,
   Home,
   User,
   LogOut
@@ -26,12 +25,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useWhatsappIntegration } from '@/hooks/useWhatsappIntegration';
 
 export function AppSidebar() {
   const { pathname } = useLocation();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
-  const { isWhatsGWEnabled } = useWhatsappIntegration();
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -61,13 +58,6 @@ export function AppSidebar() {
       href: '/dashboard',
       label: 'Dashboard',
       icon: BarChart,
-    },
-    {
-      href: '/dashboard/conversas',
-      label: 'WhatsApp',
-      icon: MessageCircle,
-      badge: isWhatsGWEnabled ? 'Ativo' : 'Inativo',
-      badgeColor: isWhatsGWEnabled ? 'bg-green-500' : 'bg-red-500',
     },
     {
       href: '/chat',
@@ -119,7 +109,7 @@ export function AppSidebar() {
       <SidebarContent className="p-2">
         <SidebarGroup>
           <SidebarMenu>
-            {mainLinks.map(({ href, label, icon: Icon, badge, badgeColor }) => (
+            {mainLinks.map(({ href, label, icon: Icon }) => (
               <SidebarMenuItem key={href}>
                 <SidebarMenuButton asChild>
                   <NavLink
@@ -134,11 +124,6 @@ export function AppSidebar() {
                   >
                     <Icon className="h-4 w-4" />
                     <span className="flex-1">{label}</span>
-                    {badge && (
-                      <span className={`text-xs px-2 py-0.5 rounded text-white ${badgeColor}`}>
-                        {badge}
-                      </span>
-                    )}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

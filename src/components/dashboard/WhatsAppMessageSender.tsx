@@ -85,6 +85,7 @@ export const WhatsAppMessageSender: React.FC<WhatsAppMessageSenderProps> = ({
                 <button 
                   onClick={() => removeFile(index)}
                   className="text-muted-foreground hover:text-foreground"
+                  type="button"
                 >
                   &times;
                 </button>
@@ -113,6 +114,7 @@ export const WhatsAppMessageSender: React.FC<WhatsAppMessageSenderProps> = ({
             onClick={handleSend} 
             disabled={isSending} 
             className="flex items-center gap-2"
+            type="button"
           >
             {isSending ? (
               <>

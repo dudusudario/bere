@@ -15,7 +15,7 @@ import ChatInterface from "./components/ChatInterface";
 
 // Lazy load the pages
 const MessagesPage = lazy(() => import('./pages/dashboard/mensagens'));
-const ConversasPage = lazy(() => import('./pages/dashboard/conversas')); // Nova página de conversas
+const ConversasPage = lazy(() => import('./pages/dashboard/conversas')); 
 const AgendaPage = lazy(() => import('./pages/dashboard/agenda'));
 
 function App() {
@@ -52,6 +52,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          
+          {/* Rotas com layout padrão e sidebar */}
           <Route path="/dashboard" element={
             <AppLayout>
               <Index />
@@ -67,38 +69,40 @@ function App() {
               <UserProfile />
             </AppLayout>
           } />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/profile-setup" element={<ProfileSetup />} />
-          <Route path="/email-confirmation" element={<EmailConfirmation />} />
-          <Route path="/dashboard/mensagens" element={
+          <Route path="/admin" element={
             <AppLayout>
-              <div className="dashboard-page">
-                <Suspense fallback={<div>Carregando...</div>}>
-                  <MessagesPage />
-                </Suspense>
-              </div>
+              <AdminPanel />
             </AppLayout>
           } />
-          {/* Nova rota para a página de conversas WhatsApp */}
+          
+          {/* Rotas sem sidebar */}
+          <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/email-confirmation" element={<EmailConfirmation />} />
+          
+          {/* Rotas do dashboard */}
+          <Route path="/dashboard/mensagens" element={
+            <AppLayout>
+              <Suspense fallback={<div>Carregando...</div>}>
+                <MessagesPage />
+              </Suspense>
+            </AppLayout>
+          } />
           <Route path="/dashboard/conversas" element={
             <AppLayout>
-              <div className="dashboard-page">
-                <Suspense fallback={<div>Carregando...</div>}>
-                  <ConversasPage />
-                </Suspense>
-              </div>
+              <Suspense fallback={<div>Carregando...</div>}>
+                <ConversasPage />
+              </Suspense>
             </AppLayout>
           } />
           <Route path="/dashboard/agenda" element={
             <AppLayout>
-              <div className="dashboard-page">
-                <Suspense fallback={<div>Carregando...</div>}>
-                  <AgendaPage />
-                </Suspense>
-              </div>
+              <Suspense fallback={<div>Carregando...</div>}>
+                <AgendaPage />
+              </Suspense>
             </AppLayout>
           } />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
+          {/* Rota coringa para páginas não encontradas */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

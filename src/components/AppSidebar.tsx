@@ -8,7 +8,9 @@ import {
   Settings, 
   Users, 
   Menu,
-  MessageCircle
+  MessageCircle,
+  Home,
+  User
 } from 'lucide-react';
 import {
   Sidebar,
@@ -24,10 +26,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useWhatsappIntegration } from '@/hooks/useWhatsappIntegration';
 
 export function AppSidebar() {
   const { pathname } = useLocation();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
+  const { isWhatsGWEnabled } = useWhatsappIntegration();
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -49,6 +53,11 @@ export function AppSidebar() {
   // Links para o menu principal
   const mainLinks = [
     {
+      href: '/',
+      label: 'Landing Page',
+      icon: Home,
+    },
+    {
       href: '/dashboard',
       label: 'Dashboard',
       icon: BarChart,
@@ -57,6 +66,8 @@ export function AppSidebar() {
       href: '/dashboard/conversas',
       label: 'WhatsApp',
       icon: MessageCircle,
+      badge: isWhatsGWEnabled ? 'Ativo' : 'Inativo',
+      badgeColor: isWhatsGWEnabled ? 'bg-green-500' : 'bg-red-500',
     },
     {
       href: '/chat',
@@ -75,6 +86,20 @@ export function AppSidebar() {
     },
   ];
 
+  // Links para configurações e perfil
+  const settingsLinks = [
+    {
+      href: '/profile',
+      label: 'Perfil',
+      icon: User,
+    },
+    {
+      href: '/admin',
+      label: 'Admin',
+      icon: Settings,
+    },
+  ];
+
   return (
     <Sidebar>
       <SidebarHeader className="p-2 flex items-center">
@@ -89,16 +114,42 @@ export function AppSidebar() {
       <SidebarContent className="p-2">
         <SidebarGroup>
           <SidebarMenu>
-            {mainLinks.map(({ href, label, icon: Icon }) => (
+            {mainLinks.map(({ href, label, icon: Icon, badge, badgeColor }) => (
               <SidebarMenuItem key={href}>
                 <SidebarMenuButton asChild>
                   <NavLink
                     to={href}
                     className={({ isActive }) =>
                       `w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
-                        isActive || (href !== '/dashboard' && pathname.startsWith(href))
+                        isActive || (href !== '/' && pathname.startsWith(href))
                           ? 'bg-primary/10 text-primary'
                           : 'hover:bg-muted'
+                      }`
+                    }
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="flex-1">{label}</span>
+                    {badge && (
+                      <span className={`text-xs px-2 py-0.5 rounded text-white ${badgeColor}`}>
+                        {badge}
+                      </span>
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup className="mt-2">
+          <SidebarMenu>
+            {settingsLinks.map(({ href, label, icon: Icon }) => (
+              <SidebarMenuItem key={href}>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to={href}
+                    className={({ isActive }) =>
+                      `w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+                        isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                       }`
                     }
                   >
@@ -108,40 +159,6 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarGroup className="mt-2">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <NavLink
-                  to="/profile"
-                  className={({ isActive }) =>
-                    `w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
-                      isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                    }`
-                  }
-                >
-                  <Users className="h-4 w-4" />
-                  <span>Perfil</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <NavLink
-                  to="/admin"
-                  className={({ isActive }) =>
-                    `w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
-                      isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                    }`
-                  }
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Admin</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

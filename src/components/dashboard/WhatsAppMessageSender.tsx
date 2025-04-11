@@ -83,7 +83,7 @@ export const WhatsAppMessageSender: React.FC<WhatsAppMessageSenderProps> = ({
               >
                 <span className="truncate max-w-[100px]">{file.file.name}</span>
                 <button 
-                  onClick={() => removeFile(index)}
+                  onClick={() => removeFile(file.id)}
                   className="text-muted-foreground hover:text-foreground"
                   type="button"
                 >

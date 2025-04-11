@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { LeadChatHistory } from './LeadChatHistory';
+import { fetchWhatsAppMessageHistory } from '@/utils/whatsGwApi';
 
 interface LeadChatHistorySectionProps {
   whatsapp: string;
@@ -23,16 +24,38 @@ export const LeadChatHistorySection: React.FC<LeadChatHistorySectionProps> = ({ 
     
     setIsLoadingHistory(true);
     try {
-      const { data, error } = await supabase
-        .from('n8n_chat_histories')
-        .select('*')
-        .eq('session_id', whatsapp)
-        .order('id', { ascending: false })
-        .limit(5);
+      // First try to get messages from WhatsGW API
+      const whatsGwMessages = await fetchWhatsAppMessageHistory(whatsapp);
       
-      if (error) throw error;
-      
-      setChatHistory(data || []);
+      if (whatsGwMessages.length > 0) {
+        // Format WhatsGW messages to match the expected format
+        const formattedMessages = whatsGwMessages.map(msg => ({
+          id: msg.id,
+          session_id: msg.phone_number,
+          message: [
+            {
+              role: msg.direction === 'incoming' ? 'user' : 'assistant',
+              content: msg.message,
+              sender: msg.direction === 'incoming' ? 'user' : 'assistant'
+            }
+          ],
+          created_at: msg.timestamp
+        }));
+        
+        setChatHistory(formattedMessages);
+      } else {
+        // Fallback to n8n_chat_histories if no WhatsGW messages
+        const { data, error } = await supabase
+          .from('n8n_chat_histories')
+          .select('*')
+          .eq('session_id', whatsapp)
+          .order('id', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        
+        setChatHistory(data || []);
+      }
     } catch (error) {
       console.error('Error fetching chat history:', error);
       toast({

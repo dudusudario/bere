@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ChatMessage from './ChatMessage';
 import MessageInput from './MessageInput';
@@ -12,6 +11,7 @@ import { sendToN8n } from '../utils/sendToN8n';
 import ChatFeed from './ChatFeed';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { sendWhatsAppMessage } from '../utils/whatsGwApi';
 
 const ChatInterface: React.FC = () => {
   const navigate = useNavigate();
@@ -19,9 +19,8 @@ const ChatInterface: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
-  // Define a constant for webhook enabled status
-  const isWebhookEnabled = true; // Set to true to enable webhook functionality
-  
+  const [isWhatsGWEnabled, setIsWhatsGWEnabled] = useState(false);
+
   const {
     messages,
     isLoading,
@@ -44,41 +43,58 @@ const ChatInterface: React.FC = () => {
         await loadMessageHistory(userPhone);
         setHistoryLoaded(true);
       } else {
-        setHistoryLoaded(true); // Mark as loaded even without a phone number
+        setHistoryLoaded(true);
       }
     };
     
     loadHistory();
   }, [userPhone, loadMessageHistory]);
 
-  // Function to send message with phone number
+  useEffect(() => {
+    const whatsgwEnabled = localStorage.getItem('whatsgw_enabled') === 'true';
+    setIsWhatsGWEnabled(whatsgwEnabled);
+  }, []);
+
   const handleSendMessage = async (content: string) => {
     if (!userPhone) {
       toast.error("Por favor, configure seu telefone no perfil primeiro");
       return;
     }
     
-    // Set loading state
     setSendingMessage(true);
     
     try {
       console.log("Enviando mensagem:", content, "para número:", userPhone);
       
-      // Send to n8n via webhook
-      const success = await sendToN8n({
-        username: userPhone, // Use phone as user identifier
-        numero: userPhone,
-        mensagem: content
-      });
+      let success = false;
       
-      if (success) {
-        // Message sent successfully
-        toast.success("Mensagem enviada com sucesso");
+      if (isWhatsGWEnabled) {
+        success = await sendWhatsAppMessage({
+          number: userPhone,
+          message: content,
+          files: selectedFiles.map(f => f.file)
+        });
+        
+        if (success) {
+          toast.success("Mensagem enviada com sucesso via WhatsApp");
+        } else {
+          toast.error("Falha ao enviar mensagem via WhatsApp");
+        }
       } else {
-        toast.error("Falha ao enviar mensagem para o agente");
+        success = await sendToN8n({
+          username: userPhone,
+          numero: userPhone,
+          mensagem: content
+        });
+        
+        if (success) {
+          toast.success("Mensagem enviada com sucesso");
+        } else {
+          toast.error("Falha ao enviar mensagem para o agente");
+        }
       }
     } catch (error) {
-      console.error("Erro ao enviar mensagem ao n8n:", error);
+      console.error("Erro ao enviar mensagem:", error);
       toast.error("Erro ao enviar mensagem para o agente");
     } finally {
       setSendingMessage(false);
@@ -95,7 +111,6 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
-      {/* Profile button */}
       <div className="flex justify-between p-2 border-b">
         {userPhone ? (
           <div className="flex items-center text-sm text-muted-foreground">
@@ -117,7 +132,7 @@ const ChatInterface: React.FC = () => {
             onClick={goToWebhookConfig}
           >
             <Settings className="h-4 w-4" />
-            <span>Webhooks</span>
+            <span>{isWhatsGWEnabled ? "WhatsApp" : "Webhooks"}</span>
           </Button>
           
           <Button 
@@ -133,11 +148,9 @@ const ChatInterface: React.FC = () => {
         <ProfileEditSheet open={profileOpen} onOpenChange={setProfileOpen} />
       </div>
 
-      {isWebhookEnabled ? (
-        /* Feed de mensagens via webhook com mensagens recebidas do N8N */
+      {isWhatsGWEnabled ? (
         <ChatFeed phoneNumber={userPhone} />
       ) : (
-        /* Feed de mensagens original */
         <div
           ref={chatContainerRef}
           className="flex-1 overflow-y-auto p-4 space-y-4"

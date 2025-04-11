@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { ProfileDetails } from './ProfileDetails';
 import { LeadChatHistorySection } from './LeadChatHistorySection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WhatsAppMessageSender } from './WhatsAppMessageSender';
 
 interface Lead {
   id: number;
@@ -81,6 +82,15 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
     ];
   };
 
+  // Handler for when a message is successfully sent
+  const handleMessageSent = () => {
+    // Refresh the chat history if on chat tab
+    if (activeTab === 'chat' && lead) {
+      // The LeadChatHistorySection will re-fetch data when it mounts
+      setActiveTab('chat');
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl overflow-y-auto max-h-[90vh]" hideCloseButton>
@@ -89,6 +99,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
             <TabsList className="mb-4">
               <TabsTrigger value="profile">Perfil</TabsTrigger>
               <TabsTrigger value="chat">Histórico de Chat</TabsTrigger>
+              <TabsTrigger value="send">Enviar Mensagem</TabsTrigger>
             </TabsList>
             
             <TabsContent value="profile" className="m-0">
@@ -103,6 +114,13 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
             
             <TabsContent value="chat" className="m-0">
               <LeadChatHistorySection whatsapp={lead.whatsapp} />
+            </TabsContent>
+            
+            <TabsContent value="send" className="m-0">
+              <WhatsAppMessageSender 
+                phoneNumber={lead.whatsapp} 
+                onSendSuccess={handleMessageSent}
+              />
             </TabsContent>
           </Tabs>
         )}

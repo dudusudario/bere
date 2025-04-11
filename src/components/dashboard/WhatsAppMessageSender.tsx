@@ -78,7 +78,7 @@ export const WhatsAppMessageSender: React.FC<WhatsAppMessageSenderProps> = ({
           <div className="flex flex-wrap gap-2 my-2">
             {selectedFiles.map((file, index) => (
               <div 
-                key={index.toString()} 
+                key={`file-${index}`}
                 className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-md px-2 py-1 text-sm"
               >
                 <span className="truncate max-w-[100px]">{file.file.name}</span>

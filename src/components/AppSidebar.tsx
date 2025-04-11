@@ -6,11 +6,11 @@ import {
   CalendarDays,
   MessageSquare, 
   Settings, 
-  Users, 
   Menu,
   MessageCircle,
   Home,
-  User
+  User,
+  LogOut
 } from 'lucide-react';
 import {
   Sidebar,
@@ -98,6 +98,11 @@ export function AppSidebar() {
       label: 'Admin',
       icon: Settings,
     },
+    {
+      href: '/login',
+      label: 'Login',
+      icon: User,
+    },
   ];
 
   return (
@@ -165,11 +170,12 @@ export function AppSidebar() {
       <SidebarFooter className="p-2">
         <Button 
           variant="outline" 
-          className="w-full" 
+          className="w-full flex items-center gap-2" 
           onClick={handleSignOut}
           disabled={isSigningOut}
         >
-          {isSigningOut ? 'Saindo...' : 'Sair'}
+          <LogOut className="h-4 w-4" />
+          <span>{isSigningOut ? 'Saindo...' : 'Sair'}</span>
         </Button>
       </SidebarFooter>
     </Sidebar>

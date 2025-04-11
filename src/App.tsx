@@ -12,6 +12,7 @@ import AdminPanel from "./pages/AdminPanel";
 import ProfileSetup from "./pages/ProfileSetup";
 import EmailConfirmation from "./pages/EmailConfirmation";
 import ChatInterface from "./components/ChatInterface";
+import Login from "./pages/Login";
 
 // Lazy load the pages
 const MessagesPage = lazy(() => import('./pages/dashboard/mensagens'));
@@ -51,9 +52,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          {/* Pages without sidebar */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/email-confirmation" element={<EmailConfirmation />} />
+          <Route path="/login" element={<Login />} />
           
-          {/* Rotas com layout padrão e sidebar */}
+          {/* All other pages with sidebar */}
           <Route path="/dashboard" element={
             <AppLayout>
               <Index />
@@ -75,11 +80,7 @@ function App() {
             </AppLayout>
           } />
           
-          {/* Rotas sem sidebar */}
-          <Route path="/profile-setup" element={<ProfileSetup />} />
-          <Route path="/email-confirmation" element={<EmailConfirmation />} />
-          
-          {/* Rotas do dashboard */}
+          {/* Dashboard routes */}
           <Route path="/dashboard/mensagens" element={
             <AppLayout>
               <Suspense fallback={<div>Carregando...</div>}>
@@ -102,7 +103,7 @@ function App() {
             </AppLayout>
           } />
           
-          {/* Rota coringa para páginas não encontradas */}
+          {/* Catch-all route for 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

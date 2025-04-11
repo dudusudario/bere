@@ -24,19 +24,19 @@ export const LeadChatHistorySection: React.FC<LeadChatHistorySectionProps> = ({ 
     
     setIsLoadingHistory(true);
     try {
-      // First try to get messages from WhatsGW API
+      // First try to get messages from WhatsGW API through our database
       const whatsGwMessages = await fetchWhatsAppMessageHistory(whatsapp);
       
       if (whatsGwMessages.length > 0) {
-        // Format WhatsGW messages to match the expected format
+        // Format messages to match the expected format
         const formattedMessages = whatsGwMessages.map(msg => ({
           id: msg.id,
-          session_id: msg.phone_number,
+          session_id: msg.numero,
           message: [
             {
-              role: msg.direction === 'incoming' ? 'user' : 'assistant',
-              content: msg.message,
-              sender: msg.direction === 'incoming' ? 'user' : 'assistant'
+              role: msg.origem,
+              content: msg.mensagem,
+              sender: msg.origem
             }
           ],
           created_at: msg.timestamp

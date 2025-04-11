@@ -107,16 +107,14 @@ interface MessageData {
 
 async function saveMessageToDatabase(data: MessageData): Promise<void> {
   try {
+    // Store message in the user_menssagens table which already exists
     const { error } = await supabase
-      .from('whatsgw_messages')
+      .from('user_menssagens')
       .insert({
-        phone_number: data.phoneNumber,
-        message: data.message,
-        message_id: data.messageId || null,
-        direction: data.direction,
-        status: data.status,
-        media: data.media || null,
-        timestamp: data.timestamp,
+        numero: data.phoneNumber,
+        mensagem: data.message,
+        origem: data.direction === 'incoming' ? 'user' : 'assistant',
+        timestamp: data.timestamp
       });
       
     if (error) {
@@ -137,10 +135,11 @@ export const setupWhatsGwWebhooks = (callbackUrl: string): void => {
 // Function to fetch message history for a specific contact
 export const fetchWhatsAppMessageHistory = async (phoneNumber: string): Promise<any[]> => {
   try {
+    // Use the existing user_menssagens table to fetch messages
     const { data, error } = await supabase
-      .from('whatsgw_messages')
+      .from('user_menssagens')
       .select('*')
-      .eq('phone_number', phoneNumber)
+      .eq('numero', phoneNumber)
       .order('timestamp', { ascending: true });
       
     if (error) {

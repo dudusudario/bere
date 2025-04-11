@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // WhatsGW API configuration
-const WHATSGW_API_BASE_URL = 'https://api.whatsgw.com.br'; // Replace with actual API base URL
+const WHATSGW_API_BASE_URL = 'https://api.whatsgw.com.br'; 
+const WHATSGW_API_KEY = 'e2fb8f7d-9d74-4665-8e08-678cde37a0c1'; // A chave API que você forneceu
 
 interface SendMessageParams {
   number: string;
@@ -33,7 +34,7 @@ export const sendWhatsAppMessage = async ({ number, message, files }: SendMessag
     const response = await fetch(`${WHATSGW_API_BASE_URL}/send-message`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.WHATSGW_API_KEY}`, // API key should be stored in environment variables
+        'Authorization': `Bearer ${WHATSGW_API_KEY}`,
       },
       body: formData,
     });

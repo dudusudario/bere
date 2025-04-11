@@ -1,172 +1,161 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, User, LogOut, Settings, Calendar } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
 
+import React from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { 
+  BarChart, 
+  CalendarDays,
+  MessageSquare, 
+  Settings, 
+  Users, 
+  Menu,
+  MessageCircle
+} from 'lucide-react';
 import {
   Sidebar,
+  SidebarHeader,
   SidebarContent,
+  SidebarTrigger,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 export function AppSidebar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { isMobile, state, setOpen } = useSidebar();
-  const [isHovering, setIsHovering] = useState(false);
-  
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-  
-  const handleLogout = async () => {
+  const { pathname } = useLocation();
+  const [isSigningOut, setIsSigningOut] = React.useState(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
       await supabase.auth.signOut();
-      toast({
-        title: 'Logout realizado',
-        description: 'Você foi desconectado com sucesso.',
-      });
-      navigate('/');
+      window.location.href = '/';
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Error signing out:', error);
       toast({
-        variant: 'destructive',
-        title: 'Erro ao fazer logout',
-        description: 'Ocorreu um erro. Tente novamente.',
+        title: "Erro ao sair",
+        description: "Houve um problema ao tentar sair da sua conta.",
+        variant: "destructive",
       });
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    // Auto close sidebar on mobile
-    if (isMobile) {
-      const sidebarTrigger = document.querySelector('[data-sidebar="trigger"]');
-      if (sidebarTrigger) {
-        (sidebarTrigger as HTMLButtonElement).click();
-      }
-    }
-  };
-  
-  // Handle mouse enter to expand the sidebar
-  const handleMouseEnter = () => {
-    if (!isMobile && state === 'collapsed') {
-      setIsHovering(true);
-      setOpen(true);
-    }
-  };
-  
-  // Handle mouse leave to collapse the sidebar
-  const handleMouseLeave = () => {
-    if (!isMobile && isHovering) {
-      setIsHovering(false);
-      setOpen(false);
-    }
-  };
+  // Links para o menu principal
+  const mainLinks = [
+    {
+      href: '/dashboard',
+      label: 'Dashboard',
+      icon: BarChart,
+    },
+    {
+      href: '/dashboard/conversas',
+      label: 'WhatsApp',
+      icon: MessageCircle,
+    },
+    {
+      href: '/chat',
+      label: 'Chat Assistente',
+      icon: MessageSquare,
+    },
+    {
+      href: '/dashboard/mensagens',
+      label: 'Mensagens',
+      icon: MessageSquare,
+    },
+    {
+      href: '/dashboard/agenda',
+      label: 'Agenda',
+      icon: CalendarDays,
+    },
+  ];
 
   return (
-    <Sidebar 
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      collapsible="icon"
-    >
-      <SidebarHeader>
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center">
-            <h2 className="text-xl font-bold text-primary">
-              {state === "collapsed" && !isHovering ? "B" : "Berenice"}
-            </h2>
-          </div>
-          {isMobile && (
-            <SidebarTrigger />
-          )}
+    <Sidebar>
+      <SidebarHeader className="p-2 flex items-center">
+        <div className="flex-1 flex items-center gap-2">
+          <span className="font-semibold">Lovable</span>
         </div>
+        <SidebarTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Menu className="h-4 w-4" />
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        </SidebarTrigger>
       </SidebarHeader>
-      
-      <SidebarContent>
+      <SidebarContent className="p-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  tooltip="Página Inicial" 
-                  onClick={() => handleNavigation('/dashboard')}
-                  isActive={isActive('/dashboard')}
-                >
-                  <Home className="h-5 w-5" />
-                  <span>Página Inicial</span>
+          <SidebarMenu>
+            {mainLinks.map(({ href, label, icon: Icon }) => (
+              <SidebarMenuItem key={href}>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to={href}
+                    className={({ isActive }) =>
+                      `w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+                        isActive || (href !== '/dashboard' && pathname.startsWith(href))
+                          ? 'bg-primary/10 text-primary'
+                          : 'hover:bg-muted'
+                      }`
+                    }
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                  </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  tooltip="Chat" 
-                  onClick={() => handleNavigation('/chat')}
-                  isActive={isActive('/chat')}
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup className="mt-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    `w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+                      isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    }`
+                  }
                 >
-                  <MessageCircle className="h-5 w-5" />
-                  <span>Chat</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              {/* Novo item de menu para a Agenda */}
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  tooltip="Agenda" 
-                  onClick={() => handleNavigation('/dashboard/agenda')}
-                  isActive={isActive('/dashboard/agenda')}
-                >
-                  <Calendar className="h-5 w-5" />
-                  <span>Agenda</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  tooltip="Perfil" 
-                  onClick={() => handleNavigation('/profile')}
-                  isActive={isActive('/profile')}
-                >
-                  <User className="h-5 w-5" />
+                  <Users className="h-4 w-4" />
                   <span>Perfil</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  tooltip="Configurações" 
-                  onClick={() => handleNavigation('/admin')}
-                  isActive={isActive('/admin')}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+                      isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    }`
+                  }
                 >
-                  <Settings className="h-5 w-5" />
-                  <span>Configurações</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
+                  <Settings className="h-4 w-4" />
+                  <span>Admin</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Sair" onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
-              <span>Sair</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="p-2">
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+        >
+          {isSigningOut ? 'Saindo...' : 'Sair'}
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );

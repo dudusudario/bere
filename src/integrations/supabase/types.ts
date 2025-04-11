@@ -1298,6 +1298,42 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsgw_messages: {
+        Row: {
+          created_at: string
+          direction: string | null
+          id: string
+          media: Json | null
+          message: string
+          message_id: string | null
+          phone_number: string
+          status: string | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          direction?: string | null
+          id?: string
+          media?: Json | null
+          message: string
+          message_id?: string | null
+          phone_number: string
+          status?: string | null
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string | null
+          id?: string
+          media?: Json | null
+          message?: string
+          message_id?: string | null
+          phone_number?: string
+          status?: string | null
+          timestamp?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

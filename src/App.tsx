@@ -15,7 +15,8 @@ import ChatInterface from "./components/ChatInterface";
 
 // Lazy load the pages
 const MessagesPage = lazy(() => import('./pages/dashboard/mensagens'));
-const AgendaPage = lazy(() => import('./pages/dashboard/agenda')); // Nova página de agenda
+const ConversasPage = lazy(() => import('./pages/dashboard/conversas')); // Nova página de conversas
+const AgendaPage = lazy(() => import('./pages/dashboard/agenda'));
 
 function App() {
   const queryClient = new QueryClient();
@@ -78,7 +79,16 @@ function App() {
               </div>
             </AppLayout>
           } />
-          {/* Nova rota para a página de agenda */}
+          {/* Nova rota para a página de conversas WhatsApp */}
+          <Route path="/dashboard/conversas" element={
+            <AppLayout>
+              <div className="dashboard-page">
+                <Suspense fallback={<div>Carregando...</div>}>
+                  <ConversasPage />
+                </Suspense>
+              </div>
+            </AppLayout>
+          } />
           <Route path="/dashboard/agenda" element={
             <AppLayout>
               <div className="dashboard-page">
